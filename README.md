@@ -21,7 +21,7 @@ With this library, everything is built from "Schema Primitives" _(henceforth ref
 
 ## Validation with a Primitive
 ```typescript
-import { Schema } from "@jeremy-bankes/schema";
+import { Schema } from "@lucania/schema";
 
 const dataOfUnknownType: any = 123;
 const dataOfNumberType = Schema.validate("number", dataOfUnknownType);
@@ -40,7 +40,7 @@ With _Primitives_, you can now start building more complex data structures. Ther
 ## Creating Schema
 These primitives and constructs can come together to allow you to define your own schema.
 ```typescript
-import { Schema } from "@jeremy-bankes/schema";
+import { Schema } from "@lucania/schema";
 
 /* ↓ Schema Definition */
 const PersonSchema = Schema.build({
