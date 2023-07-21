@@ -1,0 +1,40 @@
+{
+    "name": "@lucania/schema",
+    "version": "1.0.0",
+    "description": "A schema module for compile-time and runtime type checking.",
+    "main": "./build/index.js",
+    "types": "./build/index.d.ts",
+    "files": [
+        "/build"
+    ],
+    "scripts": {
+        "setup": "npm install",
+        "clean": "erase /F /S /Q build",
+        "build": "npx rollup --bundleConfigAsCjs --config rollup.config.js",
+        "build:clean": "npm run clean && npm run build",
+        "build:watch": "npx rollup --watch --bundleConfigAsCjs --config rollup.config.js",
+        "push": "npm run build:clean && npm publish --access public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/lucania-software/schema.git"
+    },
+    "keywords": [
+        "Schema"
+    ],
+    "author": "Jeremy Bankes",
+    "license": "GPL-3.0-or-later",
+    "bugs": {
+        "url": "https://github.com/lucania-software/schema/issues"
+    },
+    "homepage": "https://github.com/lucania-software/schema#readme",
+    "devDependencies": {
+        "@babel/preset-env": "^7.22.9",
+        "@rollup/plugin-typescript": "^11.1.2",
+        "@types/node": "^20.4.2",
+        "nodemon": "^3.0.1",
+        "rollup": "^3.26.3",
+        "tslib": "^2.6.0",
+        "typescript": "^5.1.6"
+    }
+}
