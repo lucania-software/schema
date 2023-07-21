@@ -5,7 +5,7 @@ export default {
     input: "source/index.ts",
     output: {
         file: "build/index.js",
-        name: "Schema",
+        name: "LucaniaSchema",
         format: "umd",
         sourcemap: false,
         exports: "named"
