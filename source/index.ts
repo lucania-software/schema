@@ -171,7 +171,7 @@ export namespace Schema {
         return Array.isArray(value) && value.length === 3 && isSchema(value[0]) && value[1] === "or" && isSchema(value[2]);
     }
 
-    export function isSchemaAndCompound(value: any): value is Schema.OrCompound {
+    export function isSchemaAndCompound(value: any): value is Schema.AndCompound {
         return Array.isArray(value) && value.length === 3 && isSchema(value[0]) && value[1] === "and" && isSchema(value[2]);
     }
 
@@ -307,6 +307,43 @@ export namespace Schema {
             return new ValidationError(errorType, schema, source, path, originalSchema, originalSource);
         } else {
             return new ValidationError("invalidSchema", schema, source, path, originalSchema, originalSource);
+        }
+    }
+
+    export function clone<Schema extends Schema.Any>(schema: Schema): Schema;
+    export function clone(schema: any): any {
+        if (isSchemaPrimitive(schema)) {
+            return schema;
+        } else if (isSchemaOrCompound(schema)) {
+            const [a, _, b] = schema;
+            return [clone(a), "or", clone(b)];
+        } else if (isSchemaAndCompound(schema)) {
+            const [a, _, b] = schema;
+            return [clone(a), "and", clone(b)];
+        } else if (isSchemaMeta(schema)) {
+            const meta: any = {
+                type: clone(schema.type),
+                required: schema.required,
+            };
+            if ("default" in schema) {
+                meta.default = schema.default;
+            }
+            if ("validate" in schema) {
+                meta.validate = schema.validate;
+            }
+            return meta;
+        } else if (isSchemaDynamic(schema)) {
+            return { $: clone(schema.$) };
+        } else if (isSchemaArray(schema)) {
+            return [schema.map(clone)];
+        } else if (isSchemaHierarchy(schema)) {
+            const hierarchy: any = {};
+            for (const key in schema) {
+                hierarchy[key] = clone(schema[key]);
+            }
+            return hierarchy;
+        } else {
+            throw new Error("Invalid Schema.");
         }
     }
 
