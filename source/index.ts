@@ -335,7 +335,7 @@ export namespace Schema {
         } else if (isSchemaDynamic(schema)) {
             return { $: clone(schema.$) };
         } else if (isSchemaArray(schema)) {
-            return [schema.map(clone)];
+            return schema.map(clone);
         } else if (isSchemaHierarchy(schema)) {
             const hierarchy: any = {};
             for (const key in schema) {
