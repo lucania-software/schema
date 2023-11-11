@@ -6,7 +6,51 @@ export namespace Schema {
     export type DefaultCallback<Type> = () => Type | Promise<Type>;
     export type DefaultOption<Type> = Type | DefaultCallback<Type> | undefined;
     export type ConversionCallback<From, To> = (from: From) => To;
-    export type ValidationCallback<Type> = (data: Type) => Type;
+    export type ValidationCallback<Type> = (data: Type, pass: ValidationPass) => Type;
+
+    class ValidationPass {
+
+        public readonly originalSchema: DefinitionItem;
+        public readonly originalSource: Source<DefinitionItem>;
+        private _path: string[];
+        private _schema: DefinitionItem;
+        private _source: Source<DefinitionItem>;
+
+        public constructor(originalSchema: DefinitionItem, originalSource: Source<DefinitionItem>) {
+            this.originalSchema = originalSchema;
+            this.originalSource = originalSource;
+            this._path = [];
+            this._schema = originalSchema;
+            this._source = originalSource;
+        }
+
+        public get path() { return this._path; }
+        public get schema() { return this._schema; }
+        public get source() { return this._source; }
+
+        public next(path: string[], schema: DefinitionItem, source: Source<DefinitionItem>) {
+            const nextPass = new ValidationPass(this.originalSchema, this.originalSource);
+            nextPass._path = path;
+            nextPass._source = source;
+            nextPass._schema = schema;
+            return nextPass;
+        }
+
+        public assert(condition: boolean, message: string) {
+            if (!condition) {
+                throw this.error(message);
+            }
+        }
+
+        public error(message?: string) {
+            if (message === undefined) {
+                this.error(`Validation failed.`);
+            } else {
+                return new Error(`${message}\n\tPath: ${this.path.join(".")}`);
+            }
+        }
+
+    }
 
     export namespace Definition {
 
@@ -82,17 +126,17 @@ export namespace Schema {
                 return definition;
             }
             public expression(regularExpression: RegExp, failureMessage: string) {
-                return this.validate((value) => {
+                return this.validate((value, pass) => {
                     if (!regularExpression.test(value)) {
-                        throw new Error(failureMessage);
+                        throw pass.error(failureMessage);
                     }
                     return value;
                 });
             }
             public length(minimum: number, maximum: number, failureMessage: string) {
-                return this.validate((value) => {
+                return this.validate((value, pass) => {
                     if (value.length < minimum || value.length > maximum) {
-                        throw new Error(failureMessage);
+                        throw pass.error(failureMessage);
                     }
                     return value;
                 });
@@ -168,7 +212,30 @@ export namespace Schema {
                 definition.validators.push(...this.validators, callback);
                 return definition;
             }
-
+            public before(date: globalThis.Date, message?: string) {
+                return this.validate((data, pass) => {
+                    if (date >= data) {
+                        throw pass.error(message);
+                    }
+                    return data;
+                });
+            }
+            public after(date: globalThis.Date, message?: string) {
+                return this.validate((data, pass) => {
+                    if (date <= data) {
+                        throw pass.error(message);
+                    }
+                    return data;
+                });
+            }
+            public between(start: globalThis.Date, end: globalThis.Date, message?: string) {
+                return this.validate((data, pass) => {
+                    if (data < start || data > end) {
+                        throw pass.error(message);
+                    }
+                    return data;
+                });
+            }
         }
 
         export class Structure<
@@ -310,6 +377,8 @@ export namespace Schema {
     export const type = {
         string: new Definition.String<"required">("required", undefined),
         number: new Definition.Number<"required">("required", undefined),
+        boolean: new Definition.Boolean<"required">("required", undefined),
+        date: new Definition.Date<"required">("required", undefined),
 
         object: <Schema extends DefinitionItem>(schema: Schema) => new Definition.Structure<Schema, "required">(schema, "required", undefined),
         array: <Schema extends DefinitionItem>(schema: Schema) => new Definition.Array<Schema, "required">(schema, "required", undefined),
@@ -359,29 +428,33 @@ export namespace Schema {
         never
     );
 
-    // export type SourceRequirement<Schema extends DefinitionItem> = (
-    //     Schema extends Schema.Definition.Generic<any, infer Presence, infer Default> ? (
-    //         Presence extends "required" ? "required" : "optional"
-    //     ) :
-    //     Schema extends { [Key: string]: DefinitionItem } ? (
-    //         { [Key in keyof Schema]: ModelRequirement<Schema[Key]> }[keyof Schema] extends "optional" ? "optional" : "required"
-    //     ) :
-    //     never
-    // );
+    export type SourceRequirement<Schema extends DefinitionItem> = (
+        Schema extends Schema.Definition.Generic<any, infer Presence, infer Default> ? (
+            Presence extends "required" ? (
+                Default extends undefined ? "required" : "optional"
+            ) : (
+                "optional"
+            )
+        ) :
+        Schema extends { [Key: string]: DefinitionItem } ? (
+            { [Key in keyof Schema]: SourceRequirement<Schema[Key]> }[keyof Schema] extends "optional" ? "optional" : "required"
+        ) :
+        never
+    );
 
-    // export type Source<Schema extends DefinitionItem> = (
-    //     Schema.DefinitionItem extends Schema ? unknown :
-    //     Schema extends { [Key: string]: DefinitionItem } ? (
-    //         Merge<
-    //             { [Key in keyof Schema as ModelRequirement<Schema[Key]> extends "required" ? Key : never]: Model<Schema[Key]> },
-    //             { [Key in keyof Schema as ModelRequirement<Schema[Key]> extends "optional" ? Key : never]?: Model<Schema[Key]> }
-    //         >
-    //     ) :
-    //     Schema extends Schema.Definition.Generic<infer Type, infer Presence, infer Default> ? (
-    //         Presence extends "required" ? Type : Type | undefined
-    //     ) :
-    //     never
-    // );
+    export type Source<Schema extends DefinitionItem> = (
+        Schema.DefinitionItem extends Schema ? unknown :
+        Schema extends { [Key: string]: DefinitionItem } ? (
+            Merge<
+                { [Key in keyof Schema as SourceRequirement<Schema[Key]> extends "required" ? Key : never]: Source<Schema[Key]> },
+                { [Key in keyof Schema as SourceRequirement<Schema[Key]> extends "optional" ? Key : never]?: Source<Schema[Key]> }
+            >
+        ) :
+        Schema extends Schema.Definition.Generic<infer Type, any, any> ? (
+            SourceRequirement<Schema> extends "required" ? Type : Type | undefined
+        ) :
+        never
+    );
 
     export function getExtendedType(value: any) {
         if (value instanceof Object) {
@@ -401,67 +474,67 @@ export namespace Schema {
         return builder(Schema.type);
     }
 
-    export function validate<Schema extends DefinitionItem>(schema: Schema, data: any, path: string[]): Model<Schema> {
+    export function validate<Schema extends DefinitionItem>(schema: Schema, source: Source<Schema>, pass: ValidationPass = new ValidationPass(schema, source)): Model<Schema> {
         let result: any;
         if (schema instanceof Schema.Definition.Generic) {
-            if (schema.defaultValue !== undefined && data === undefined) {
+            if (schema.defaultValue !== undefined && source === undefined) {
                 if (typeof schema.defaultValue === "function") {
-                    data = schema.defaultValue();
+                    source = schema.defaultValue();
                 } else {
-                    data = schema.defaultValue;
+                    source = schema.defaultValue;
                 }
             }
+            const type = getExtendedType(source);
             if (schema instanceof Schema.Definition.Primitive) {
-                if (typeof data !== schema.extendedTypeName) {
-                    const type = getExtendedType(data);
+                if (typeof source !== schema.extendedTypeName) {
                     if (type in schema.converters) {
-                        result = schema.converters[type](data);
+                        result = schema.converters[type](source);
                     } else {
-                        throw new Error(`Expected the type "${schema.extendedTypeName}" at path "${path.join(".")}", but got the type "${type}".`);
+                        throw pass.error(`Expected the type "${schema.extendedTypeName}", but found the type "${type}".`);
                     }
                 } else {
-                    result = data;
+                    result = source;
                 }
             } else if (schema instanceof Schema.Definition.Structure) {
-                if (typeof data !== "object" || data === null) {
-                    throw new Error(`Expected object @ (${path.join(".")})`);
+                if (typeof source !== "object" || source === null) {
+                    throw pass.error(`Expected an object, but found the type "${type}".`);
                 }
                 result = {}
                 for (const key in schema.subschema) {
-                    result[key] = validate(schema.subschema[key], data[key], [...path, key]);
+                    result[key] = validate(schema.subschema[key], (source as any)[key], pass.next([...pass.path, key], schema.subschema, (source as any)[key]));
                 }
             } else if (schema instanceof Schema.Definition.Array) {
-                if (!Array.isArray(data)) {
+                if (!Array.isArray(source)) {
                     throw new Error("Expected array");
                 }
                 result = [];
-                for (let i = 0; i < data.length; i++) {
-                    const value = data[i];
-                    result.push(validate(schema.subschema, value, [...path, i.toString()]));
+                for (let i = 0; i < source.length; i++) {
+                    const value = source[i];
+                    result.push(validate(schema.subschema, value, pass.next([...pass.path, i.toString()], schema.subschema, value)));
                 }
             } else if (schema instanceof Schema.Definition.Dynamic) {
-                if (typeof data !== "object" || data === null) {
-                    throw new Error(`Expected object @ (${path.join(".")})`);
+                if (typeof source !== "object" || source === null) {
+                    throw pass.error(`Expected an object, but found the type "${type}".`);
                 }
                 const validatedObject: any = {};
-                for (const key in data) {
-                    validatedObject[key] = validate(schema.subschema, data[key], [...path, key]);
+                for (const key in source) {
+                    validatedObject[key] = validate(schema.subschema, source[key], pass.next([...pass.path, key], schema.subschema, source[key]));
                 }
                 return validatedObject;
             } else if (schema instanceof Schema.Definition.Enumeration) {
-                if (typeof data !== "string") {
-                    throw new Error(`Expected string for enumeration @ (${path.join(".")})`);
+                if (typeof source !== "string") {
+                    throw pass.error("Expected string for enumeration.");
                 }
-                if (!schema.members.includes(data)) {
-                    throw new Error(`"${data}" is not a valid enumeration member @ (${path.join(".")})`);
+                if (!schema.members.includes(source)) {
+                    throw pass.error(`"${source}" is not a valid enumeration member.`);
                 }
-                result = data;
+                result = source;
             } else if (schema instanceof Schema.Definition.Or) {
                 try {
-                    result = validate(schema.schemaA, data, path);
+                    result = validate(schema.schemaA, source, pass);
                 } catch (errorA) {
                     try {
-                        result = validate(schema.schemaB, data, path);
+                        result = validate(schema.schemaB, source, pass);
                     } catch (errorB) {
                         throw new Error(`Failed to pass validation at logical or. Supplied value didn't match either schemas.`);
                     }
@@ -472,14 +545,14 @@ export namespace Schema {
         } else if (typeof schema === "object" && schema !== null) {
             const validatedObject: any = {};
             for (const key in schema) {
-                validatedObject[key] = validate(schema[key] as any, data[key], [...path, key]);
+                validatedObject[key] = validate(schema[key] as any, (source as any)[key], pass.next([...pass.path, key], schema.subschema, (source as any)[key]));
             }
             return validatedObject;
         } else {
             throw new Error("Invalid schema!");
         }
         for (const validator of schema.validators) {
-            result = validator(result);
+            result = validator(result, pass);
         }
         return result as Model<Schema>;
     }
@@ -490,32 +563,37 @@ const PersonSchema = Schema.build((type) => ({
     name: {
         first: type.string.validate((firstName) => firstName.toLowerCase().trim()).length(3, 12, "Your first name must be from 3 to 12 characters long!"),
         middle: type.string.default(() => new Date().toString()),
-        last: type.string.expression(/^[A-Z]+$/, "Your last name must be all capital letters and no special characters."),
-        nicknames: type.array({ display: type.string })
+        last: type.string,
+        nicknames: type.array({ display: type.string }).default([])
     },
     items: type.dynamic({ display: type.string, value: type.number.optional() }),
-    job: type.object({ title: type.string }).default({ title: "Random Jo", loser: true }),
-    age: type.number,
-    magic: type.logic.or(type.logic.or(type.string, type.number), { cows: type.string }),
-    toes: type.enumeration("Weird", "Ugly", "Pretty")
+    job: type.object({ title: type.string }).validate((job, tools) => {
+        tools.assert(!job.title.toLowerCase().includes("programmer"), "We don't take programmers here.");
+        return job;
+    }).default({ title: "Random Jo" }),
+    contact: {
+        phone: type.string.expression(/[0-9]{3}-[0-9]{3}-[0-9]{4}/, "Please enter your phone number in the format XXX-XXX-XXXX")
+    },
+    age: type.number.default(0),
+    birthDate: type.date.before(new Date()),
+    hair: type.enumeration("Weird", "Ugly", "Pretty"),
+    magic: type.logic.or(type.logic.or(type.string, type.number), { cows: type.boolean })
 }));
 
 type Person = Schema.Model<typeof PersonSchema>;
 
 const result = Schema.validate(PersonSchema, {
     name: {
-        first: "Germ",
-        last: "BANKES",
-        nicknames: [{ display: "Germ" }, { display: "Jar-jar" }]
+        first: "Jeremy",
+        last: "Bankes"
     },
-    items: {
-        cow: { display: "Bessie", value: 43 },
-        laptop: { display: "Kratos", value: 3000 },
-        van: { display: "Bovis", value: 10000 }
+    contact: {
+        phone: "782-774-7100"
     },
-    age: 23,
-    magic: { cows: "Jesus" },
-    toes: "Ugly"
-}, []);
+    birthDate: new Date(2000, 9, 29),
+    items: {},
+    hair: "Weird",
+    magic: 1
+});
 
 console.log("Result", result);
