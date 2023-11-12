@@ -1,11 +1,15 @@
 export namespace Schema {
 
+    export const Global = globalThis;
+    export type GlobalDate = globalThis.Date;
+    export type GlobalError = globalThis.Date;
+
     export type PresenceOption = "required" | "optional";
 
     export type Builder<Schema extends DefinitionItem> = (type: typeof Schema.type) => Schema;
     export type DefaultCallback<Type> = () => Type | Promise<Type>;
     export type DefaultOption<Type> = Type | DefaultCallback<Type> | undefined;
-    export type ConversionCallback<From, To> = (from: From) => To;
+    export type ConversionCallback<From, To> = (from: From, pass: ValidationPass) => To;
     export type ValidationCallback<Type> = (data: Type, pass: ValidationPass) => Type;
 
     class ValidationPass {
@@ -46,8 +50,19 @@ export namespace Schema {
             if (message === undefined) {
                 this.error(`Validation failed.`);
             } else {
-                return new Error(`${message}\n\tPath: ${this.path.join(".")}`);
+                return new ValidationError(this, `${message}\n\tPath: ${this.path.join(".")}`);
             }
+        }
+
+    }
+
+    export class ValidationError extends Global.Error {
+
+        public readonly pass: ValidationPass;
+
+        public constructor(pass: ValidationPass, message: string) {
+            super(message);
+            this.pass = pass;
         }
 
     }
@@ -114,7 +129,7 @@ export namespace Schema {
                 super("string", presence, defaultValue);
                 this.converters["number"] = (value: number) => value.toString();
                 this.converters["boolean"] = (value: boolean) => value ? "true" : "false";
-                this.converters["Date"] = (value: globalThis.Date) => value.toISOString();
+                this.converters["Date"] = (value: GlobalDate) => value.toISOString();
             }
 
             public required() { return new String("required", this._default); }
@@ -151,13 +166,15 @@ export namespace Schema {
 
             public constructor(presence: Presence, defaultValue: Default) {
                 super("number", presence, defaultValue);
-                this.converters["string"] = (value: string) => {
+                this.converters["string"] = (value: string, pass) => {
                     const number = parseFloat(value);
-                    if (isNaN(number)) { throw new Error(`Unable to convert the string "${value}" to a number`); }
+                    if (isNaN(number)) {
+                        throw pass.error(`Unable to convert the string "${value}" to a number`);
+                    }
                     return number;
                 }
                 this.converters["boolean"] = (value: boolean) => value ? 1 : 0;
-                this.converters["Date"] = (value: globalThis.Date) => value.getTime();
+                this.converters["Date"] = (value: GlobalDate) => value.getTime();
             }
 
             public required() { return new Number("required", this._default); }
@@ -195,24 +212,24 @@ export namespace Schema {
 
         export class Date<
             Presence extends PresenceOption = PresenceOption,
-            Default extends DefaultOption<globalThis.Date> = undefined
-        > extends Primitive<globalThis.Date, Presence, Default> {
+            Default extends DefaultOption<GlobalDate> = undefined
+        > extends Primitive<GlobalDate, Presence, Default> {
 
             public constructor(presence: Presence, defaultValue: Default) {
                 super("Date", presence, defaultValue);
-                this.converters["string"] = (value: string) => new globalThis.Date(value);
-                this.converters["number"] = (value: number) => new globalThis.Date(value);
+                this.converters["string"] = (value: string) => new Global.Date(value);
+                this.converters["number"] = (value: number) => new Global.Date(value);
             }
 
             public required() { return new Date("required", this._default); }
             public optional() { return new Date("optional", this._default); }
-            public default<NewDefault extends DefaultOption<globalThis.Date>>(defaultValue: NewDefault) { return new Date(this.presence, defaultValue); }
-            public validate(callback: ValidationCallback<globalThis.Date>) {
+            public default<NewDefault extends DefaultOption<GlobalDate>>(defaultValue: NewDefault) { return new Date(this.presence, defaultValue); }
+            public validate(callback: ValidationCallback<GlobalDate>) {
                 const definition = new Date(this.presence, this.defaultValue);
                 definition.validators.push(...this.validators, callback);
                 return definition;
             }
-            public before(date: globalThis.Date, message?: string) {
+            public before(date: GlobalDate, message?: string) {
                 return this.validate((data, pass) => {
                     if (date >= data) {
                         throw pass.error(message);
@@ -220,7 +237,7 @@ export namespace Schema {
                     return data;
                 });
             }
-            public after(date: globalThis.Date, message?: string) {
+            public after(date: GlobalDate, message?: string) {
                 return this.validate((data, pass) => {
                     if (date <= data) {
                         throw pass.error(message);
@@ -228,7 +245,7 @@ export namespace Schema {
                     return data;
                 });
             }
-            public between(start: globalThis.Date, end: globalThis.Date, message?: string) {
+            public between(start: GlobalDate, end: GlobalDate, message?: string) {
                 return this.validate((data, pass) => {
                     if (data < start || data > end) {
                         throw pass.error(message);
@@ -488,7 +505,7 @@ export namespace Schema {
             if (schema instanceof Schema.Definition.Primitive) {
                 if (typeof source !== schema.extendedTypeName) {
                     if (type in schema.converters) {
-                        result = schema.converters[type](source);
+                        result = schema.converters[type](source, pass);
                     } else {
                         throw pass.error(`Expected the type "${schema.extendedTypeName}", but found the type "${type}".`);
                     }
@@ -505,7 +522,7 @@ export namespace Schema {
                 }
             } else if (schema instanceof Schema.Definition.Array) {
                 if (!Array.isArray(source)) {
-                    throw new Error("Expected array");
+                    throw pass.error("Expected array");
                 }
                 result = [];
                 for (let i = 0; i < source.length; i++) {
@@ -536,11 +553,11 @@ export namespace Schema {
                     try {
                         result = validate(schema.schemaB, source, pass);
                     } catch (errorB) {
-                        throw new Error(`Failed to pass validation at logical or. Supplied value didn't match either schemas.`);
+                        throw pass.error(`Failed to pass validation at logical or. Supplied value didn't match either schemas.`);
                     }
                 }
             } else {
-                throw new Error(`The schema definition type "${schema.constructor.name}" hasn't been implemented!`);
+                throw pass.error(`The schema definition type "${schema.constructor.name}" hasn't been implemented!`);
             }
         } else if (typeof schema === "object" && schema !== null) {
             const validatedObject: any = {};
@@ -549,7 +566,7 @@ export namespace Schema {
             }
             return validatedObject;
         } else {
-            throw new Error("Invalid schema!");
+            throw pass.error("Invalid schema!");
         }
         for (const validator of schema.validators) {
             result = validator(result, pass);
@@ -558,42 +575,3 @@ export namespace Schema {
     }
 
 }
-
-const PersonSchema = Schema.build((type) => ({
-    name: {
-        first: type.string.validate((firstName) => firstName.toLowerCase().trim()).length(3, 12, "Your first name must be from 3 to 12 characters long!"),
-        middle: type.string.default(() => new Date().toString()),
-        last: type.string,
-        nicknames: type.array({ display: type.string }).default([])
-    },
-    items: type.dynamic({ display: type.string, value: type.number.optional() }),
-    job: type.object({ title: type.string }).validate((job, tools) => {
-        tools.assert(!job.title.toLowerCase().includes("programmer"), "We don't take programmers here.");
-        return job;
-    }).default({ title: "Random Jo" }),
-    contact: {
-        phone: type.string.expression(/[0-9]{3}-[0-9]{3}-[0-9]{4}/, "Please enter your phone number in the format XXX-XXX-XXXX")
-    },
-    age: type.number.default(0),
-    birthDate: type.date.before(new Date()),
-    hair: type.enumeration("Weird", "Ugly", "Pretty"),
-    magic: type.logic.or(type.logic.or(type.string, type.number), { cows: type.boolean })
-}));
-
-type Person = Schema.Model<typeof PersonSchema>;
-
-const result = Schema.validate(PersonSchema, {
-    name: {
-        first: "Jeremy",
-        last: "Bankes"
-    },
-    contact: {
-        phone: "782-774-7100"
-    },
-    birthDate: new Date(2000, 9, 29),
-    items: {},
-    hair: "Weird",
-    magic: 1
-});
-
-console.log("Result", result);
