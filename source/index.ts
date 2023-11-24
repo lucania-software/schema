@@ -254,16 +254,17 @@ export namespace Schema {
             }
             const result = _validate(schema.type, source, path, originalSchema, originalSource);
             if (result instanceof ValidationError && result.type === "missing") {
+                if (!schema.required && source === undefined) {
+                    return undefined;
+                }
                 if ("default" in schema) {
                     if (typeof schema.default === "function") {
                         return _validate(schema.type, schema.default(), path, originalSchema, originalSource);
                     } else {
                         return _validate(schema.type, schema.default, path, originalSchema, originalSource);
                     }
-                } else if (schema.required) {
-                    return result;
                 }
-                return undefined;
+                return result;
             }
             return result;
         } else if (isSchemaDynamic(schema)) {
