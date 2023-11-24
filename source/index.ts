@@ -11,6 +11,13 @@ export namespace Schema {
     export type DefaultOption<Type> = Type | DefaultCallback<Type> | undefined;
     export type ConversionCallback<From, To> = (from: From, pass: ValidationPass) => To;
     export type ValidationCallback<Type> = (data: Type, pass: ValidationPass) => Type;
+    export type JSONSchema = {
+        title: string,
+        description: string,
+        type: string,
+        items?: JSONSchema,
+        properties?: { [Key: string]: JSONSchema }
+    } | { [Key: string]: JSONSchema };
 
     class ValidationPass {
 
@@ -492,7 +499,8 @@ export namespace Schema {
     }
 
     export function validate<Schema extends DefinitionItem>(schema: Schema, source: Source<Schema>, pass: ValidationPass = new ValidationPass(schema, source)): Model<Schema> {
-        let result: any;
+        let result: any = undefined;
+        const type = getExtendedType(source);
         if (schema instanceof Schema.Definition.Generic) {
             if (schema.defaultValue !== undefined && source === undefined) {
                 if (typeof schema.defaultValue === "function") {
@@ -501,12 +509,11 @@ export namespace Schema {
                     source = schema.defaultValue;
                 }
             }
-            const type = getExtendedType(source);
             if (schema instanceof Schema.Definition.Primitive) {
                 if (typeof source !== schema.extendedTypeName) {
                     if (type in schema.converters) {
                         result = schema.converters[type](source, pass);
-                    } else {
+                    } else if (source !== undefined || schema.presence === "required") {
                         throw pass.error(`Expected the type "${schema.extendedTypeName}", but found the type "${type}".`);
                     }
                 } else {
@@ -514,39 +521,51 @@ export namespace Schema {
                 }
             } else if (schema instanceof Schema.Definition.Structure) {
                 if (typeof source !== "object" || source === null) {
-                    throw pass.error(`Expected an object, but found the type "${type}".`);
-                }
-                result = {}
-                for (const key in schema.subschema) {
-                    result[key] = validate(schema.subschema[key], (source as any)[key], pass.next([...pass.path, key], schema.subschema, (source as any)[key]));
+                    if (source !== undefined || schema.presence === "required") {
+                        throw pass.error(`Expected an object, but found the type "${type}".`);
+                    }
+                } else {
+                    result = {}
+                    for (const key in schema.subschema) {
+                        result[key] = validate(schema.subschema[key], (source as any)[key], pass.next([...pass.path, key], schema.subschema, (source as any)[key]));
+                    }
                 }
             } else if (schema instanceof Schema.Definition.Array) {
                 if (!Array.isArray(source)) {
-                    throw pass.error("Expected array");
-                }
-                result = [];
-                for (let i = 0; i < source.length; i++) {
-                    const value = source[i];
-                    result.push(validate(schema.subschema, value, pass.next([...pass.path, i.toString()], schema.subschema, value)));
+                    if (source !== undefined || schema.presence === "required") {
+                        throw pass.error(`Expected array, but found the type "${type}".`);
+                    }
+                } else {
+                    result = [];
+                    for (let i = 0; i < source.length; i++) {
+                        const value = source[i];
+                        result.push(validate(schema.subschema, value, pass.next([...pass.path, i.toString()], schema.subschema, value)));
+                    }
                 }
             } else if (schema instanceof Schema.Definition.Dynamic) {
                 if (typeof source !== "object" || source === null) {
-                    throw pass.error(`Expected an object, but found the type "${type}".`);
+                    if (source !== undefined || schema.presence === "required") {
+                        throw pass.error(`Expected an object, but found the type "${type}".`);
+                    }
+                } else {
+                    const validatedObject: any = {};
+                    for (const key in source) {
+                        validatedObject[key] = validate(schema.subschema, source[key], pass.next([...pass.path, key], schema.subschema, source[key]));
+                    }
+                    return validatedObject;
                 }
-                const validatedObject: any = {};
-                for (const key in source) {
-                    validatedObject[key] = validate(schema.subschema, source[key], pass.next([...pass.path, key], schema.subschema, source[key]));
-                }
-                return validatedObject;
             } else if (schema instanceof Schema.Definition.Enumeration) {
                 if (typeof source !== "string") {
-                    throw pass.error("Expected string for enumeration.");
-                }
-                if (!schema.members.includes(source)) {
+                    if (source !== undefined || schema.presence === "required") {
+                        throw pass.error("Expected string for enumeration.");
+                    }
+                } else if (!schema.members.includes(source)) {
                     throw pass.error(`"${source}" is not a valid enumeration member.`);
+                } else {
+                    result = source;
                 }
-                result = source;
             } else if (schema instanceof Schema.Definition.Or) {
+                // TO-DO: May need to check presence requirement or the Or operator.
                 try {
                     result = validate(schema.schemaA, source, pass);
                 } catch (errorA) {
@@ -557,12 +576,17 @@ export namespace Schema {
                     }
                 }
             } else {
-                throw pass.error(`The schema definition type "${schema.constructor.name}" hasn't been implemented!`);
+                throw pass.error(`The schema definition type "${schema.constructor.name}" is missing a runtime implementation!`);
             }
         } else if (typeof schema === "object" && schema !== null) {
+            pass.assert(typeof source === "object" && source !== null, `Expected object, but got ${type}.`);
             const validatedObject: any = {};
             for (const key in schema) {
-                validatedObject[key] = validate(schema[key] as any, (source as any)[key], pass.next([...pass.path, key], schema.subschema, (source as any)[key]));
+                validatedObject[key] = validate(
+                    schema[key] as any,
+                    (source as any)[key],
+                    pass.next([...pass.path, key], schema.subschema, (source as any)[key])
+                );
             }
             return validatedObject;
         } else {
@@ -572,6 +596,71 @@ export namespace Schema {
             result = validator(result, pass);
         }
         return result as Model<Schema>;
+    }
+
+    export function getJsonSchema<Schema extends DefinitionItem>(schema: Schema, path: string[] = []): JSONSchema {
+        if (schema instanceof Schema.Definition.Generic) {
+            if (schema instanceof Schema.Definition.Primitive) {
+                return {
+                    type: schema.extendedTypeName,
+                    title: `${schema.presence} ${schema.extendedTypeName}`,
+                    description: path.join(".")
+                };
+            } else if (schema instanceof Schema.Definition.Structure) {
+                const properties: any = {};
+                for (const key in schema) {
+                    properties[key] = getJsonSchema(schema.subschema[key] as any, [...path, key]);
+                }
+                return {
+                    type: "object",
+                    title: `${schema.presence} object`,
+                    description: path.join("."),
+                    properties
+                };
+            } else if (schema instanceof Schema.Definition.Array) {
+                const items = getJsonSchema(schema.subschema, [...path, "<index>"]);
+                return {
+                    type: "array",
+                    title: `${schema.presence} array`,
+                    description: path.join("."),
+                    items
+                };
+            } else if (schema instanceof Schema.Definition.Dynamic) {
+                return {
+                    type: "object",
+                    title: "<json schema conversion unimplemented>",
+                    description: path.join(".")
+                };
+            } else if (schema instanceof Schema.Definition.Enumeration) {
+                return {
+                    type: "string",
+                    title: "Enumeration",
+                    description: `${schema.members.join(", ")}\n${path.join(".")}`,
+                    enum: schema.members
+                };
+            } else if (schema instanceof Schema.Definition.Or) {
+                return {
+                    type: "object",
+                    title: "<json schema conversion unimplemented>",
+                    description: path.join(".")
+                };
+            } else {
+                throw new Error(`The schema definition type "${schema.constructor.name}" is missing a runtime implementation!`);
+            }
+        } else if (typeof schema === "object" && schema !== null) {
+            const properties: any = {};
+            for (const key in schema) {
+                properties[key] = getJsonSchema(schema[key] as any, [...path, key]);
+            }
+            return {
+                type: "object",
+                title: "required object",
+                description: path.join("."),
+                properties
+            };
+        } else {
+            throw new Error("Invalid schema!");
+        }
     }
 
 }
