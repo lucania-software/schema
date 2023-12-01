@@ -59,7 +59,7 @@ export namespace Schema {
             number: (value) => {
                 const numberValue = parseFloat(value);
                 if (Number.isNaN(numberValue)) {
-                    Schema.assert(value.length === 0, `Failed to convert empty string to number.`);
+                    Schema.assert(value.length !== 0, `Failed to convert empty string to number.`);
                     throw new Schema.Error(`Failed to convert "${value}" to number.`);
                 }
                 return numberValue;
