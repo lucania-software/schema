@@ -230,6 +230,9 @@ export namespace Schema {
         if (isSchemaPrimitive(schema)) {
             const sourceType = getType(source);
             if (sourceType === schema || schema === "any") {
+                if (schema === "number" && isNaN(source)) {
+                    throw new ValidationError("incorrectType", schema, source, path, originalSchema, originalSource, `Missing required number.`);
+                }
                 return source;
             } else if (sourceType === "object" && source !== null && source.constructor.name === schema) {
                 return source;
@@ -413,7 +416,10 @@ export namespace Schema {
         }
 
         public static getMessage(type: ValidationErrorType, source: any, schema: Schema.Any, path: string[]): string {
-            const sourceRepresentation = JSON.stringify(source);
+            let sourceRepresentation = JSON.stringify(source);
+            if (isNaN(source)) {
+                sourceRepresentation = "NaN";
+            }
             switch (type) {
                 case "missing":
                     return path.length === 0 ?
@@ -439,3 +445,6 @@ export namespace Schema {
     }
 
 }
+
+const cow = Schema.validate({ cow: { type: "number", required: true } }, { cow: NaN });
+console.log(cow);
