@@ -445,6 +445,3 @@ export namespace Schema {
     }
 
 }
-
-const cow = Schema.validate({ cow: { type: "number", required: true } }, { cow: NaN });
-console.log(cow);
