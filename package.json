@@ -1,6 +1,6 @@
 {
     "name": "@lucania/schema",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "description": "A schema module for compile-time and runtime type checking.",
     "main": "./build/index.js",
     "types": "./build/index.d.ts",
