@@ -422,7 +422,8 @@ export namespace Schema {
         ObjectA & ObjectB
     );
 
-    export type DefinitionItem = Schema.Definition.Generic<any, PresenceOption, DefaultOption<any>> | { [Key: string]: DefinitionItem };
+    export type DefinitionItem = Schema.Definition.Generic<any, PresenceOption, DefaultOption<any>> | DefinitionHierarchy;
+    export type DefinitionHierarchy = { [Key: string]: DefinitionItem };
 
     export type ModelRequirement<Schema extends DefinitionItem> = (
         Schema extends Schema.Definition.Generic<any, infer Presence, infer Default> ? (
@@ -439,7 +440,7 @@ export namespace Schema {
     );
 
     export type Model<Schema extends DefinitionItem> = (
-        Schema.DefinitionItem extends Schema ? unknown :
+        // Schema.DefinitionItem extends Schema ? unknown :
         Schema extends { [Key: string]: DefinitionItem } ? (
             Merge<
                 { [Key in keyof Schema as ModelRequirement<Schema[Key]> extends "required" ? Key : never]: Model<Schema[Key]> },
@@ -467,7 +468,7 @@ export namespace Schema {
     );
 
     export type Source<Schema extends DefinitionItem> = (
-        Schema.DefinitionItem extends Schema ? unknown :
+        // Schema.DefinitionItem extends Schema ? unknown :
         Schema extends { [Key: string]: DefinitionItem } ? (
             Merge<
                 { [Key in keyof Schema as SourceRequirement<Schema[Key]> extends "required" ? Key : never]: Source<Schema[Key]> },
@@ -662,5 +663,7 @@ export namespace Schema {
             throw new Error("Invalid schema!");
         }
     }
+
+    export type Any<Type = any> = Definition.Generic<Type, PresenceOption, DefaultOption<Type>>;
 
 }
