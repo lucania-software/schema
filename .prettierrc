@@ -1,0 +1,17 @@
+{
+    "trailingComma": "none",
+    "tabWidth": 4,
+    "semi": true,
+    "singleQuote": false,
+    "experimentalTernaries": true,
+    "printWidth": 160,
+    "bracketSameLine": true,
+    "overrides": [
+        {
+            "files": ".prettierrc",
+            "options": {
+                "parser": "json"
+            }
+        }
+    ]
+}
