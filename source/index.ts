@@ -10,8 +10,6 @@ import { ObjectSchema } from "./schema/ObjectSchema";
 import { OrSetSchema, OrSetSchemaSource } from "./schema/OrSetSchema";
 import { Schema } from "./schema/Schema";
 import { StringSchema } from "./schema/StringSchema";
-import { BaseSchemaAny } from "./typing/extended";
-import { SourceValue } from "./typing/toolbox";
 
 const ItemSchema = new ObjectSchema({
     type: new EnumerationSchema(BaseSchema.TypedMembers("personal", "business"), true, undefined),
@@ -41,7 +39,7 @@ const NetworkMessageSchema = new OrSetSchema(BaseSchema.TypedMembers(
         type: new EnumerationSchema(BaseSchema.TypedMembers("metal"), true, undefined),
         hardened: new BooleanSchema(true, false)
     }, true, undefined)
-), true, undefined);
+), false, { type: "metal", hardened: false });
 
 const members = [
     new ObjectSchema({
@@ -59,7 +57,6 @@ type TestA = [
 ];
 
 type Test = OrSetSchemaSource<TestA>;
-NetworkMessageSchema.validate({ type: "metal", hardened: true });
 
 try {
     const person = PersonSchema.validate({
@@ -90,8 +87,11 @@ try {
             }
         }
     });
-
     console.log(person);
+
+
+    const thatBean = NetworkMessageSchema.validate(undefined);
+    console.log(thatBean);
 } catch (error) {
     if (error instanceof Error) {
         console.error(error.message);

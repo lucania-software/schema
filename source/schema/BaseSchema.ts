@@ -1,7 +1,6 @@
 import { ValidationPass } from "../error/ValidationPass";
 import type { AdditionalValidationPasses, AdditionalValidator, AdditionalValidatorAfterType, AdditionalValidatorBeforeType, AdditionalValidatorType, DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
 
-
 export abstract class BaseSchema<Source, Model, Required extends boolean, Default extends DefaultValue<Source>> {
 
     public readonly type: string;
@@ -42,7 +41,7 @@ export abstract class BaseSchema<Source, Model, Required extends boolean, Defaul
         } else {
             result = this._executeAdditionalValidator(result, pass, "afterConversion");
             if (this._required) {
-                throw pass.getError(`Missing required value at "${pass.path.join(".")}".`);
+                throw pass.getError(pass.path.length > 0 ? `Missing required value at "${pass.path.join(".")}".` : "Missing required value.");
             } else {
                 result = undefined;
             }

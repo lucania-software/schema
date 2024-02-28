@@ -1,20 +1,15 @@
-import { Schema } from "./extended";
-import { BaseSchema } from "../schema/BaseSchema";
-import { ObjectSubschema } from "../schema/ObjectSchema";
 import { ValidationPass } from "../error/ValidationPass";
+import { BaseSchema } from "../schema/BaseSchema";
+import { BaseSchemaAny } from "./extended";
 
-export type SourceRequirement<Layout extends Schema> = (
+export type SourceRequirement<Layout extends BaseSchemaAny> = (
     Layout extends BaseSchema<any, any, infer Required, infer Default> ? (
         Required extends true ? (
             Default extends undefined ? true : false
         ) : (
             false
         )
-    ) :
-    Layout extends ObjectSubschema ? (
-        { [Key in keyof Layout]: SourceRequirement<Layout[Key]> }[keyof Layout] extends false ? false : true
-    ) :
-    never
+    ) : never
 );
 
 export type SourceValue<Source, Required extends boolean, Default extends DefaultValue<Source>> = (

@@ -11,21 +11,6 @@ export type OrSetSchemaSource<MemberSchemas extends BaseSchemaAny[]> = {
     )
 }[number];
 
-// export type OrSetSchemaSource<MemberSchemas extends Schema[]> = (
-//     {
-//         [Key in keyof MemberSchemas as number extends Key ? never : MemberSchemas[Key] extends BaseSchemaAny ? Key : never]: (
-//             MemberSchemas[Key] extends BaseSchema<infer Source, any, infer Required, infer Default> ? (
-//                 SourceValue<Source, Required, Default>
-//             ) : 1
-//         )
-//     }
-//     // {
-//     //     [Key in keyof MemberSchemas]: MemberSchemas[Key] extends BaseSchema<infer Source, any, infer Required, infer Default> ? (
-//     //         SourceValue<Source, Required, Default>
-//     //     ) : MemberSchemas[Key]
-//     // }
-// );
-
 export type OrSetSchemaModel<MemberSchemas extends BaseSchemaAny[]> = ({
     [Key in keyof MemberSchemas]: (
         MemberSchemas[Key] extends BaseSchema<infer Source, infer Model, infer Required, infer Default> ? (
@@ -47,16 +32,25 @@ export class OrSetSchema<MemberSchemas extends BaseSchemaAny[], Required extends
     public validate(source: SourceValue<OrSetSchemaSource<MemberSchemas>, Required, Default>, pass?: ValidationPass):
         ModelValue<OrSetSchemaSource<MemberSchemas>, OrSetSchemaModel<MemberSchemas>, Required, Default> {
         pass = this._ensurePass(source, pass);
-        const result: any = super.validate(source, pass);
-
-        for (const schema of this.schemas) {
-            try {
-                schema.validate(source, pass);
-            } catch (error) {
-
+        let result: any = super.validate(source, pass);
+        if (result !== undefined) {
+            let done = false;
+            const failureMessages: string[] = [];
+            for (let i = 0; i < this.schemas.length && !done; i++) {
+                const schema = this.schemas[i];
+                try {
+                    result = schema.validate(result, pass);
+                    done = true;
+                } catch (error) {
+                    if (error instanceof Error) {
+                        failureMessages.push(`Schema #${i + 1}: ${error.message}`);
+                    } else {
+                        failureMessages.push(`Schema #${i + 1}: ${String(error)}`);
+                    }
+                    pass.assert(failureMessages.length !== this.schemas.length, `Supplied value didn't match any schemas in or-set.\n${failureMessages.join("\n")}`);
+                }
             }
         }
-
         return result;
     }
 

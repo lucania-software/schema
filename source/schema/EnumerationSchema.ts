@@ -16,7 +16,7 @@ export class EnumerationSchema<Members extends string[], Required extends boolea
         ModelValue<Members[number], Members[number], Required, Default> {
         pass = this._ensurePass(source, pass);
         const result: any = super.validate(source, pass);
-        pass.assert(this.members.includes(result), `"${result}" is not a valid enumeration value. (Expected: ${this.members.join(", ")})`);
+        pass.assert(this.members.includes(result), `"${result}" is not a valid enumeration value (Expected: ${this.members.join(", ")}).`);
         return result;
     }
 
