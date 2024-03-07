@@ -1,3 +1,4 @@
+import { ObjectModel, Schema, StringSchema } from "..";
 import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchema } from "../schema/BaseSchema";
 import { BaseSchemaAny } from "./extended";
@@ -24,11 +25,13 @@ export type SourceValue<Source, Required extends boolean, Default extends Defaul
 
 export type ModelValue<Source, Model, Required extends boolean, Default extends DefaultValue<Source>> = (
     Required extends true ? Model :
-    undefined extends Default ? Model | undefined :
+    Default extends undefined ? Model | undefined :
     Model
 );
 
-export type DefaultValue<Type> = undefined | Type | (() => Type);
+export type DefaultValue<Type> = undefined | Type | ((pass: ValidationPass) => Type);
+
+export type TypedMembers<Members> = { data: Members };
 
 export type AdditionalValidatorBeforeType = (
     "beforeAll" |
@@ -54,6 +57,8 @@ export type AdditionalValidatorAfterType = (
 export type AdditionalValidatorType = AdditionalValidatorBeforeType | AdditionalValidatorAfterType;
 
 export type AdditionalValidator<Type> = (data: Type, pass: ValidationPass) => Type;
+
+export type EnsureValidator<Type> = (data: Type, pass: ValidationPass) => boolean;
 
 export type AdditionalValidationPasses<Source, Model> = {
     beforeAll: AdditionalValidator<Source>[]

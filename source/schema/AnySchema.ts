@@ -13,4 +13,8 @@ export class AnySchema<Required extends boolean, Default extends DefaultValue<an
         return value;
     }
 
+    public getJsonSchema(): object {
+        return { description: this._getJsonSchemaDescription() };
+    }
+
 }

@@ -4,8 +4,7 @@ import { BaseSchema } from "./BaseSchema";
 
 type StandardDate = globalThis.Date;
 const StandardDate = globalThis.Date;
-type DateSource = string | number | StandardDate;
-
+export type DateSource = string | number | StandardDate;
 export class DateSchema<Required extends boolean, Default extends DefaultValue<DateSource>>
     extends BaseSchema<DateSource, StandardDate, Required, Default> {
 
@@ -67,6 +66,13 @@ export class DateSchema<Required extends boolean, Default extends DefaultValue<D
             );
             return model;
         }, "afterAll");
+    }
+
+    public getJsonSchema(): object {
+        return {
+            type: "string",
+            description: this._getJsonSchemaDescription(),
+        };
     }
 
 }

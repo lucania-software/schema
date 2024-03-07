@@ -17,7 +17,7 @@ export type OrSetSchemaModel<MemberSchemas extends BaseSchemaAny[]> = ({
             ModelValue<Source, Model, Required, Default>
         ) : never
     )
-});
+})[number];
 
 export class OrSetSchema<MemberSchemas extends BaseSchemaAny[], Required extends boolean, Default extends DefaultValue<OrSetSchemaSource<MemberSchemas>>>
     extends BaseSchema<OrSetSchemaSource<MemberSchemas>, OrSetSchemaModel<MemberSchemas>, Required, Default> {
@@ -56,6 +56,10 @@ export class OrSetSchema<MemberSchemas extends BaseSchemaAny[], Required extends
 
     public convert(value: OrSetSchemaSource<MemberSchemas>, pass: ValidationPass): OrSetSchemaModel<MemberSchemas> {
         return value as any;
+    }
+
+    public getJsonSchema(): object {
+        return { oneOf: this.schemas.map((schema) => schema.getJsonSchema()) };
     }
 
 }

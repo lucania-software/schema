@@ -24,4 +24,12 @@ export class EnumerationSchema<Members extends string[], Required extends boolea
         return value;
     }
 
+    public getJsonSchema(): object {
+        return {
+            type: "string",
+            description: this._getJsonSchemaDescription(),
+            enum: this.members
+        };
+    }
+
 }

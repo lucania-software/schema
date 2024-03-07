@@ -39,12 +39,21 @@ export class ArraySchema<Subschema extends BaseSchemaAny, Required extends boole
     }
 
     public convert(value: ArraySource<Subschema>, pass: ValidationPass): ArrayModel<Subschema> {
-        const model: any = {};
-        for (const key in this.subschema) {
-            const nestedValue = (value as any)[key];
-            model[key] = this.subschema.convert(nestedValue, pass.next([...pass.path, key], this.subschema, nestedValue));
+        if (Array.isArray(value)) {
+            return value as any;
+        } else if (typeof value === "string") {
+            return [value] as any;
+        } else {
+            throw pass.getError(`Unable to convert ${BaseSchema.getType(value)} to array.`);
         }
-        return model;
+    }
+
+    public getJsonSchema(): object {
+        return {
+            type: "array",
+            description: this._getJsonSchemaDescription(),
+            items: this.subschema.getJsonSchema()
+        };
     }
 
 }

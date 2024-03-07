@@ -2,7 +2,7 @@ import { DefaultValue } from "../typing/toolbox";
 import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchema } from "./BaseSchema";
 
-type BooleanSource = boolean | number | string | null | undefined;
+export type BooleanSource = boolean | number | string | null | undefined;
 export class BooleanSchema<Required extends boolean, Default extends DefaultValue<BooleanSource>>
     extends BaseSchema<BooleanSource, boolean, Required, Default> {
 
@@ -24,6 +24,13 @@ export class BooleanSchema<Required extends boolean, Default extends DefaultValu
         } else {
             throw pass.getError(`Unable to convert ${BaseSchema.getType(value)} to boolean.`);
         }
+    }
+
+    public getJsonSchema(): object {
+        return {
+            type: "boolean",
+            description: this._getJsonSchemaDescription(),
+        };
     }
 
 }

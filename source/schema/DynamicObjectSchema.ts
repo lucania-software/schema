@@ -49,4 +49,13 @@ export class DynamicObjectSchema<Subschema extends BaseSchemaAny, Required exten
         }
         return model;
     }
+
+    public getJsonSchema(): object {
+        return {
+            type: "object",
+            description: this._getJsonSchemaDescription(),
+            additionalProperties: this.subschema.getJsonSchema()
+        };
+    }
+
 }

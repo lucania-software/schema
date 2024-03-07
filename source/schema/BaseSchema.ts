@@ -1,5 +1,5 @@
 import { ValidationPass } from "../error/ValidationPass";
-import type { AdditionalValidationPasses, AdditionalValidator, AdditionalValidatorAfterType, AdditionalValidatorBeforeType, AdditionalValidatorType, DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
+import type { AdditionalValidationPasses, AdditionalValidator, AdditionalValidatorAfterType, AdditionalValidatorBeforeType, AdditionalValidatorType, DefaultValue, EnsureValidator, ModelValue, SourceValue } from "../typing/toolbox";
 
 export abstract class BaseSchema<Source, Model, Required extends boolean, Default extends DefaultValue<Source>> {
 
@@ -62,18 +62,58 @@ export abstract class BaseSchema<Source, Model, Required extends boolean, Defaul
         return this;
     }
 
+    public ensure(ensureValidator: EnsureValidator<Model>, message?: string): this {
+        this.custom((value, pass) => {
+            pass.assert(ensureValidator(value, pass), message === undefined ? `Failed to ensure value.` : message);
+            return value;
+        });
+        return this;
+    }
+
     public hasDefault() {
-        return this._default !== undefined;
+        return this._default !== undefined && this._default !== null;
+    }
+
+    public isDefaultRuntimeEvaluated(): this is { _default: Function } {
+        return typeof this._default === "function";
     }
 
     public getDefault(pass: ValidationPass): Source {
-        if (typeof this._default === "function") {
-            return this._default();
-        } else if (this._default !== undefined && this._default !== null) {
+        if (this.isDefaultRuntimeEvaluated()) {
+            return this._default(pass);
+        } else if (this.hasDefault()) {
             return this._default as Source;
         } else {
             throw pass.getError(`Failed to get default. Invalid default value.`);
         }
+    }
+
+    protected _getValueDisplay(value: Model): string {
+        return String(value);
+    }
+
+    public abstract getJsonSchema(): object;
+
+    protected _getJsonSchemaDescription() {
+        const pass = new ValidationPass(this, this._default);
+        const descriptionPieces: string[] = [];
+        descriptionPieces.push(`A ${this._required ? "required" : "optional"} ${this.type}`);
+        if (this.hasDefault()) {
+            let defaultValue: any = this.getDefault(pass);
+            if (BaseSchema.getType(defaultValue) !== this.type) {
+                defaultValue = this.convert(defaultValue, pass)
+            }
+            if (Array.isArray(defaultValue)) {
+                defaultValue = `[${defaultValue.join(", ")}]`;
+            }
+            if (this.isDefaultRuntimeEvaluated()) {
+                descriptionPieces.push(` that defaults to a run-time evaluated value (i.e. ${defaultValue})`);
+            } else {
+                descriptionPieces.push(` that defaults to ${defaultValue}`);
+            }
+        }
+        descriptionPieces.push(".");
+        return descriptionPieces.join("");
     }
 
     protected _ensurePass(source: SourceValue<Source, Required, Default>, pass?: ValidationPass) {
@@ -116,10 +156,6 @@ export abstract class BaseSchema<Source, Model, Required extends boolean, Defaul
         } else {
             return type;
         }
-    }
-
-    public static TypedMembers<Members extends any[]>(...members: Members): Members {
-        return members;
     }
 
 }
