@@ -1,90 +1,64 @@
 # Schema
----
 | TECHNICAL | |
 |:-:|-|
 | _noun_ | _a representation of a plan or theory in the form of an outline or model._|
 
 This library allows you to specify the schema for your data, and get compile time typings _(help from your IDE)_ and runtime validation _(throw errors if your data isn't in the right format)_.
 
-With this library, everything is built from "Schema Primitives" _(henceforth referred to as "Primitives")_, out of the box, all of the JavaScript primitive types are implemented, but this set of _Primitives_ can be extended for your use case. The JavaScript `Date` is also a supported _Primitive_. All of your schema objects will be built from this extensible set of _Primitives_.
+With this library, you create objects that serve as a blueprint for what your data should look like. These objects are called `Schema`s.
 
-|_Primitives_|
-|:-:|
-|`undefined`|
-|`boolean`|
-|`number`|
-|`bigint`|
-|`string`|
-|`symbol`|
-|`any`|
-|`Date`|
+|_Schema Type_|Description|Usage|Example Data|
+|:-:|:-|:-|:-|
+|`StringSchema`|Used to represent a string.|`$.String(required?: boolean, default?: StringSource)`|`"Moaaz"`, `"The cow jumped over the moon."`|
+|`NumberSchema`|Used to represent a number.|`$.Number(required?: boolean, default?: NumberSource)`|`-30`, `0`, `10`
+|`BooleanSchema`|Used to represent a boolean.|`$.Boolean(required?: boolean, default?: BooleanSource)`|`true`, `false`
+|`DateSchema`|Used to represent a Date.|`$.Date(required?: boolean, default?: DateSource)`|`new Date(2000, 9, 29)`, `new Date("1998-09-04")`
+|`ObjectSchema`|Used to represent an Object.|`$.Object(subschema: { <key>: Schema }, required?: boolean, default?: ObjectSource)`|`<depends on subschema>`, `{ name: "Jeremy", age: 23 }`, `{ make: "Toyota", model: "Sienna", year: 2011 }`
+|`ArraySchema`|Used to represent an array|`$.Array(subschema: Schema, required?: boolean, default?: ArraySource)`|`<depends on subschema>`, `[]`, `[1, 2, 3]`, `["Ben", "Amit", "Dean"]`
+|`EnumerationSchema`|Used to represent an enumeration value, otherwise known as a set of possible strings values.|`$.Enumeration(members: Members, required?: boolean, default?: EnumerationSource)`|`<depends on members>`, `"MAGENTA"`, `"CA"`, `"male"`
+|`OrSetSchema`|Used to represent a value that should be validated by one of many possible schemas. This is used to represent a value that is allowed to be multiple types.|`$.OrSet(members: Members, required?: boolean, default?: OrSetSource)`|`<depends on members>`
+|`DynamicObjectSchema`|Used to represent an object that could have many different keys.|`$.DynamicObject(subschema: Schema, required?: boolean, default?: DynamicObjectSource)`|`{ <any key>: <depends on subschema> }`
+|`AnySchema`|Used to represent a value that could be any type.|`$.Any(required?: boolean, default?: AnySource)`|`1`, `"Omar"`, `false`, `{}`, `[]`, `<any type>`
 
-## Validation with a Primitive
+## Validation
+The simplest possible validation:
 ```typescript
-import { Schema } from "@lucania/schema";
+import { $ } from "@lucania/schema";
 
+// Create a Schema to represent a number.
+const numberSchema = $.Number();
+
+// Some data with an unknown type, likely coming from a file, network or untyped library.
 const dataOfUnknownType: any = 123;
-const dataOfNumberType = Schema.validate("number", dataOfUnknownType);
+
+// Using our number Schema to validate that our untyped data is what we expect it to be, a number. "dataOfNumberType" now has the "number" type.
+const dataOfNumberType = numberSchema.validate(dataOfUnknownType);
 ```
 
-With _Primitives_, you can now start building more complex data structures. There are multiple way to represent different scenarios. This is done with the following constructs.
+With this collection of Schemas, we can now start building more complex data structures. There are multiple way to represent different scenarios. This is done with the following constructs.
 
-| _Constructs_ |_Structure_|_TLDR_|
-|:-:|:-:|:-:|
-|`Meta`|`{ type: <Primitive or another Construct>, required: boolean, default?: <default value>, validate: <validator> }`|A meta object to describe the nature of a section within a schema.|
-|`Array`|`[ <Primitive or another Construct> ]`|Represents an array within a schema.|
-|`Hierarchy`|`{ [ <Any keys needed> ]: <Primitive or another Construct> }`|Represents nested object hierarchy within a schema.|
-|`Compound`|`[ <Primitive or another Construct>, "or", <Primitive or another Construct> ]`| Represents union types. Currently can be used with "and" or "or". |
-|`Dynamic`|`{ $: <Primitive or another Construct> }`|Represents a object with dynamic keys. (Produces the TypeScript type `{ [Key: string]: any }`)|
-
-## Creating Schema
-These primitives and constructs can come together to allow you to define your own schema.
+## Creating Hierarchical Schema
+These schemas can come together to allow you to define a blueprint for more complex data structures.
 ```typescript
-import { Schema } from "@lucania/schema";
+import { $ } from "@lucania/schema";
 
-/* ↓ Schema Definition */
-const PersonSchema = Schema.build({
-    name: /* ← Hierarchy ↓ */ {
-        first: /* ← Meta ↓ */ {
-            type: "string" /* ← Primitive */,
-            required: true
-        },
-        middle: { type: "string", required: false },
-        last: { type: "string", required: true }
-    },
-    favoriteNumber: ["bigint" /* ← Primitive */, "or", "number"] /* ← Compound */,
-    age: {
-        type: "number",
-        required: false,
-        validate: (age: number, rawData: any) => {
-            const birthDate = Schema.validate({ type: "Date", required: false }, rawData.birthDate);
-            if (birthDate === undefined) {
-                return undefined;
-            } else {
-                const now = new Date();
-                const expectedAge = (now.getTime() - birthDate.getTime()) / 1000 / 60 / 60 / 24 / 365.25;
-                Schema.assert(Math.floor(expectedAge) === age);
-                return age;
-            }
-        }
-    },
-    birthDate: {
-        type: "Date",
-        required: false
-    }
+const WeaponSchema = $.Object({
+    damage: $.Number(true).clamp(0, 100),
+    forged: $.Date(false),
+    affixtures: $.DynamicObject($.String())
 });
 
-const WeaponSchema = Schema.build({
-    damage: "number" /* ← Primitive */,
-    owners: ["string"] /* ← Array */,
-    forged: /* ← Meta ↓ */ {
-        type: "Date",
-        required: false
-    },
-    affixtures: /* ← Dynamic ↓ */ {
-        $: "string"
-    }
+const PersonSchema = $.Object({
+    name: $.Object({
+        first: $.String(true),
+        middle: $.String(false),
+        last: $.String(true)
+    }),
+    favoriteNumber: $.Number(true).ensure((data, pass) => data % 2 === 0, "Your favorite number must be a multiple of 2!"),
+    age: $.Number(true).min(16, "You must be at least 16 years old!").max(100, "You must be at most 100 years old!"),
+    weapon: WeaponSchema
 });
+
 ```
 
 ## Using Schema
@@ -95,25 +69,8 @@ With the schema definitions created, they can be used to validate data where the
 import fs from "fs";
 
 const personData = JSON.parse(fs.readFileSync("person.json", "utf8"));
-const person = Schema.validate(PersonSchema, personData);
+const person = PersonSchema.validate(personData);
 ```
-`person` now has the following compile-time type annotation based on [`PersonSchema`](#creating-schema).
-```
-const person: {
-    name: {
-        first: string;
-        last: string;
-    } & {
-        middle?: string | undefined;
-    };
-    favoriteNumber: number | bigint;
-}
-```
+`person` now has the following compile-time type annotation based on [`PersonSchema`](#creating-hierarchical-schema).
+
 At runtime, the object parsed from the `person.json` file will be validated to match this generated typing. If it does not match, a `Schema.ValidationError` will be thrown.
-
-## To-Do
-
- * Documentation:
-   * Extending _Primitive_ set.
-   * Defining a default value / function in Meta
-   * Defining a validator in Meta

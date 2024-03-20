@@ -58,6 +58,9 @@ export type AdditionalValidatorType = AdditionalValidatorBeforeType | Additional
 
 export type AdditionalValidator<Type> = (data: Type, pass: ValidationPass) => Type;
 
+/**
+ * Represents a pass to ensure that your data meets a condition. Return true if your data is ensured to meet condition, false otherwise.
+ */
 export type EnsureValidator<Type> = (data: Type, pass: ValidationPass) => boolean;
 
 export type AdditionalValidationPasses<Source, Model> = {
