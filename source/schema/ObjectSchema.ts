@@ -1,4 +1,4 @@
-import type { DefaultValue, Merge, ModelValue, SourceRequirement, SourceValue } from "../typing/toolbox";
+import type { DefaultValue, Merge, ModelRequirement, ModelValue, SourceRequirement, SourceValue } from "../typing/toolbox";
 import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchemaAny } from "../typing/extended";
 import { BaseSchema } from "./BaseSchema";
@@ -22,11 +22,24 @@ export type ObjectSource<Subschema extends ObjectSubschema> = (
         }
     >
 );
-export type ObjectModel<Subschema extends ObjectSubschema> = {
-    [Key in keyof Subschema]: Subschema[Key] extends BaseSchema<infer Source, infer Model, infer Required, infer Default> ? (
-        ModelValue<Source, Model, Required, Default>
-    ) : never
-};
+export type ObjectModel<Subschema extends ObjectSubschema> = (
+    Merge<
+        {
+            [Key in keyof Subschema as ModelRequirement<Subschema[Key]> extends true ? Key : never]: (
+                Subschema[Key] extends BaseSchema<infer Source, infer Model, infer Required, infer Default> ? (
+                    ModelValue<Source, Model, Required, Default>
+                ) : never
+            )
+        },
+        {
+            [Key in keyof Subschema as ModelRequirement<Subschema[Key]> extends false ? Key : never]?: (
+                Subschema[Key] extends BaseSchema<infer Source, infer Model, infer Required, infer Default> ? (
+                    ModelValue<Source, Model, Required, Default>
+                ) : never
+            )
+        }
+    >
+);
 
 export class ObjectSchema<Subschema extends ObjectSubschema, Required extends boolean, Default extends DefaultValue<ObjectSource<Subschema>>>
     extends BaseSchema<ObjectSource<Subschema>, ObjectModel<Subschema>, Required, Default> {

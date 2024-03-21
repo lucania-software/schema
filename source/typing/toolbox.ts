@@ -1,4 +1,3 @@
-import { ObjectModel, Schema, StringSchema } from "..";
 import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchema } from "../schema/BaseSchema";
 import { BaseSchemaAny } from "./extended";
@@ -21,6 +20,16 @@ export type SourceValue<Source, Required extends boolean, Default extends Defaul
             Source | undefined
         )
     ) : Source | undefined
+);
+
+export type ModelRequirement<Layout extends BaseSchemaAny> = (
+    Layout extends BaseSchema<any, any, infer Required, infer Default> ? (
+        Required extends true ? (
+            true
+        ) : (
+            Default extends undefined ? false : true
+        )
+    ) : never
 );
 
 export type ModelValue<Source, Model, Required extends boolean, Default extends DefaultValue<Source>> = (
