@@ -70,7 +70,7 @@ export namespace Schema {
     export function Enumeration<Members extends string[], Required extends boolean, Default extends DefaultValue<Members[number]>>
         (subschema: TypedMembers<Members>, required: Required, defaultValue: Default): EnumerationSchema<Members, Required, Default>;
     export function Enumeration(members: TypedMembers<string[]>, required: boolean = true, defaultValue: any = undefined) {
-        return new EnumerationSchema(members.data, required, defaultValue);
+        return new EnumerationSchema(members.$members, required, defaultValue);
     }
 
     export function DynamicObject<Subschema extends BaseSchemaAny>(subschema: Subschema): DynamicObjectSchema<Subschema, true, undefined>;
@@ -86,11 +86,13 @@ export namespace Schema {
     export function OrSet<MemberSchemas extends BaseSchemaAny[], Required extends boolean, Default extends DefaultValue<OrSetSchemaSource<MemberSchemas>>>
         (subschema: TypedMembers<MemberSchemas>, required: Required, defaultValue: Default): OrSetSchema<MemberSchemas, Required, Default>;
     export function OrSet(members: TypedMembers<BaseSchemaAny[]>, required: boolean = true, defaultValue: any = undefined) {
-        return new OrSetSchema(members.data, required, defaultValue);
+        return new OrSetSchema(members.$members, required, defaultValue);
     }
 
+    export function Members<Members extends string[]>(...members: Members): TypedMembers<Members>;
+    export function Members<Members extends any[]>(...members: Members): TypedMembers<Members>;
     export function Members<Members extends any[]>(...members: Members): TypedMembers<Members> {
-        return { data: members };
+        return { $members: members };
     }
 
     export type Model<Schema extends BaseSchemaAny> = Schema extends BaseSchema<infer Source, infer Model, infer Require, infer Default> ? (

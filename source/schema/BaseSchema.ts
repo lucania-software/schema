@@ -70,6 +70,10 @@ export abstract class BaseSchema<Source, Model, Required extends boolean, Defaul
         return this;
     }
 
+    public isRequired() {
+        return this._required;
+    }
+
     public hasDefault() {
         return this._default !== undefined && this._default !== null;
     }
