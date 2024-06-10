@@ -25,14 +25,40 @@ export class OrSetSchema<MemberSchemas extends BaseSchemaAny[], Required extends
     public readonly schemas: MemberSchemas;
 
     public constructor(schemas: MemberSchemas, required: Required, defaultValue: Default) {
-        super("string", required, defaultValue);
+        super(required, defaultValue);
         this.schemas = schemas;
     }
 
-    public validate(source: SourceValue<OrSetSchemaSource<MemberSchemas>, Required, Default>, pass?: ValidationPass):
+    public get type() { return "string"; }
+
+    // public validate(source: SourceValue<OrSetSchemaSource<MemberSchemas>, Required, Default>, pass?: ValidationPass):
+    //     ModelValue<OrSetSchemaSource<MemberSchemas>, OrSetSchemaModel<MemberSchemas>, Required, Default> {
+    //     pass = this._ensurePass(source, pass);
+    //     let result: any = super.validate(source, pass);
+    //     if (result !== undefined) {
+    //         let done = false;
+    //         const failureMessages: string[] = [];
+    //         for (let i = 0; i < this.schemas.length && !done; i++) {
+    //             const schema = this.schemas[i];
+    //             try {
+    //                 result = schema.validate(result, pass);
+    //                 done = true;
+    //             } catch (error) {
+    //                 if (error instanceof Error) {
+    //                     failureMessages.push(`Schema #${i + 1}: ${error.message}`);
+    //                 } else {
+    //                     failureMessages.push(`Schema #${i + 1}: ${String(error)}`);
+    //                 }
+    //                 pass.assert(failureMessages.length !== this.schemas.length, `Supplied value didn't match any schemas in or-set.\n${failureMessages.join("\n")}`);
+    //             }
+    //         }
+    //     }
+    //     return result;
+    // }
+
+    public _validate(source: SourceValue<OrSetSchemaSource<MemberSchemas>, Required, Default>, pass: ValidationPass):
         ModelValue<OrSetSchemaSource<MemberSchemas>, OrSetSchemaModel<MemberSchemas>, Required, Default> {
-        pass = this._ensurePass(source, pass);
-        let result: any = super.validate(source, pass);
+        let result: any = source;
         if (result !== undefined) {
             let done = false;
             const failureMessages: string[] = [];

@@ -21,18 +21,31 @@ export class ArraySchema<Subschema extends BaseSchemaAny, Required extends boole
     public readonly subschema: Subschema;
 
     public constructor(subschema: Subschema, required: Required, defaultValue: Default) {
-        super("array", required, defaultValue);
+        super(required, defaultValue);
         this.subschema = subschema;
     }
 
-    public validate(source: SourceValue<ArraySource<Subschema>, Required, Default>, pass?: ValidationPass):
-        ModelValue<ArraySource<Subschema>, ArrayModel<Subschema>, Required, Default> {
-        pass = this._ensurePass(source, pass);
-        const result: any = super.validate(source, pass);
-        if (result !== undefined) {
-            for (const key in result) {
-                const nestedValue = result[key];
-                result[key] = this.subschema.validate(result[key], pass.next([...pass.path, key], this.subschema, nestedValue));
+    public get type() { return "array"; }
+
+    // public validate(source: SourceValue<ArraySource<Subschema>, Required, Default>, pass?: ValidationPass):
+    //     ModelValue<ArraySource<Subschema>, ArrayModel<Subschema>, Required, Default> {
+    //     pass = this._ensurePass(source, pass);
+    //     const result: any = super.validate(source, pass);
+    //     if (result !== undefined) {
+    //         for (const key in result) {
+    //             const nestedValue = result[key];
+    //             result[key] = this.subschema.validate(result[key], pass.next([...pass.path, key], this.subschema, nestedValue));
+    //         }
+    //     }
+    //     return result;
+    // }
+
+    protected _validate(source: SourceValue<ArraySource<Subschema>, Required, Default>, pass: ValidationPass): ModelValue<ArraySource<Subschema>, ArrayModel<Subschema>, Required, Default> {
+        const result: any = [];
+        if (source !== undefined) {
+            for (const key in source) {
+                const nestedValue = source[key];
+                result[key] = this.subschema.validate(source[key], pass.next([...pass.path, key], this.subschema, nestedValue));
             }
         }
         return result;

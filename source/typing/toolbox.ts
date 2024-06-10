@@ -65,10 +65,22 @@ export type AdditionalValidatorAfterType = (
  */
 export type AdditionalValidatorType = AdditionalValidatorBeforeType | AdditionalValidatorAfterType;
 
+/**
+ * Represents a custom pass allowing any additional value specificity code, or value augmentations.
+ * 
+ * @note Use "{@link ValidationPass pass}.assert" and/or "throw {@link ValidationPass pass}.getError" to build your value specificity checks.
+ * 
+ * @param {Type} data The data being validated.
+ * @param {ValidationPass} pass A reference to the current validation pass. Used to interact with the validation pass.
+ * @returns `data` with any desired augmentations.
+ */
 export type AdditionalValidator<Type> = (data: Type, pass: ValidationPass) => Type;
 
 /**
- * Represents a pass to ensure that your data meets a condition. Return true if your data is ensured to meet condition, false otherwise.
+ * Represents a pass to ensure that your data meets conditions.
+ * @param data The data being validated.
+ * @param pass A reference to the current validation pass. Used to interact with the validation pass.
+ * @returns `true` if your data meets the desired conditions, `false` otherwise.
  */
 export type EnsureValidator<Type> = (data: Type, pass: ValidationPass) => boolean;
 
@@ -81,8 +93,11 @@ export type AdditionalValidationPasses<Source, Model> = {
     afterAll: AdditionalValidator<Model>[]
 };
 
-export type Merge<ObjectA, ObjectB> = (
-    keyof ObjectA extends never ? ObjectB :
-    keyof ObjectB extends never ? ObjectA :
-    ObjectA & ObjectB
+/**
+ * Intersects two types.
+ */
+export type Merge<A, B> = (
+    keyof A extends never ? B :
+    keyof B extends never ? A :
+    A & B
 );

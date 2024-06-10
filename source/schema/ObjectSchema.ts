@@ -47,25 +47,44 @@ export class ObjectSchema<Subschema extends ObjectSubschema, Required extends bo
     public readonly subschema: Subschema;
 
     public constructor(subschema: Subschema, required: Required, defaultValue: Default) {
-        super("object", required, defaultValue);
+        super(required, defaultValue);
         this.subschema = subschema;
     }
 
-    public validate(source: SourceValue<ObjectSource<Subschema>, Required, Default>, pass?: ValidationPass):
-        ModelValue<ObjectSource<Subschema>, ObjectModel<Subschema>, Required, Default> {
-        pass = this._ensurePass(source, pass);
-        const result: any = super.validate(source, pass);
-        if (result !== undefined) {
+    public get type() { return "object"; }
+
+    // public validate(source: SourceValue<ObjectSource<Subschema>, Required, Default>, pass?: ValidationPass):
+    //     ModelValue<ObjectSource<Subschema>, ObjectModel<Subschema>, Required, Default> {
+    //     pass = this._ensurePass(source, pass);
+    //     const input: any = super.validate(source, pass);
+    //     let output: any = input;
+    //     if (typeof input === "object" && input !== null) {
+    //         output = {};
+    //         for (const key in this.subschema) {
+    //             const nestedSchema = this.subschema[key];
+    //             const nestedValue = input[key];
+    //             output[key] = this.subschema[key].validate(input[key], pass.next([...pass.path, key], nestedSchema, nestedValue));
+    //         }
+    //     }
+    //     return output;
+    // }
+
+    protected _validate(source: SourceValue<ObjectSource<Subschema>, Required, Default>, pass: ValidationPass): ModelValue<ObjectSource<Subschema>, ObjectModel<Subschema>, Required, Default> {
+        const input: any = source;
+        let output: any = input;
+        if (typeof input === "object" && input !== null) {
+            output = {};
             for (const key in this.subschema) {
                 const nestedSchema = this.subschema[key];
-                const nestedValue = result[key];
-                result[key] = this.subschema[key].validate(result[key], pass.next([...pass.path, key], nestedSchema, nestedValue));
+                const nestedValue = input[key];
+                output[key] = this.subschema[key].validate(input[key], pass.next([...pass.path, key], nestedSchema, nestedValue));
             }
         }
-        return result;
+        return output;
     }
 
     public convert(value: ObjectSource<Subschema>, pass: ValidationPass): ObjectModel<Subschema> {
+        pass.assert(typeof value === "object", `Unable to convert ${ObjectSchema.getType(value)} to object.`);
         const model: any = {};
         for (const key in this.subschema) {
             const nestedSchema = this.subschema[key];

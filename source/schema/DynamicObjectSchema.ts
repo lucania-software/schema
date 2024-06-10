@@ -24,14 +24,28 @@ export class DynamicObjectSchema<Subschema extends BaseSchemaAny, Required exten
     public readonly subschema: Subschema;
 
     public constructor(subschema: Subschema, required: Required, defaultValue: Default) {
-        super("object", required, defaultValue);
+        super(required, defaultValue);
         this.subschema = subschema;
     }
 
-    public validate(source: SourceValue<DynamicObjectSource<Subschema>, Required, Default>, pass?: ValidationPass):
+    public get type() { return "object"; }
+
+    // public validate(source: SourceValue<DynamicObjectSource<Subschema>, Required, Default>, pass?: ValidationPass):
+    //     ModelValue<DynamicObjectSource<Subschema>, DynamicObjectModel<Subschema>, Required, Default> {
+    //     pass = this._ensurePass(source, pass);
+    //     const result: any = super.validate(source, pass);
+    //     if (result !== undefined) {
+    //         for (const key in result) {
+    //             const nestedValue = result[key];
+    //             result[key] = this.subschema.validate(result[key], pass.next([...pass.path, key], this.subschema, nestedValue));
+    //         }
+    //     }
+    //     return result;
+    // }
+
+    public _validate(source: SourceValue<DynamicObjectSource<Subschema>, Required, Default>, pass: ValidationPass):
         ModelValue<DynamicObjectSource<Subschema>, DynamicObjectModel<Subschema>, Required, Default> {
-        pass = this._ensurePass(source, pass);
-        const result: any = super.validate(source, pass);
+        const result: any = source;
         if (result !== undefined) {
             for (const key in result) {
                 const nestedValue = result[key];

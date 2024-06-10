@@ -1,4 +1,4 @@
-import { DefaultValue } from "../typing/toolbox";
+import { DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
 import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchema } from "./BaseSchema";
 
@@ -8,8 +8,10 @@ export type DateSource = string | number | StandardDate;
 export class DateSchema<Required extends boolean, Default extends DefaultValue<DateSource>>
     extends BaseSchema<DateSource, StandardDate, Required, Default> {
 
-    public constructor(required: Required, defaultValue: Default) {
-        super("Date", required, defaultValue);
+    public get type() { return "Date"; }
+
+    protected _validate(source: SourceValue<DateSource, Required, Default>, pass: ValidationPass): ModelValue<DateSource, Date, Required, Default> {
+        return source as Date;
     }
 
     public convert(value: DateSource, pass: ValidationPass): StandardDate {

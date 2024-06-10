@@ -1,4 +1,4 @@
-import { DefaultValue } from "../typing/toolbox";
+import { DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
 import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchema } from "./BaseSchema";
 
@@ -6,8 +6,10 @@ export type BooleanSource = boolean | number | string | null | undefined;
 export class BooleanSchema<Required extends boolean, Default extends DefaultValue<BooleanSource>>
     extends BaseSchema<BooleanSource, boolean, Required, Default> {
 
-    public constructor(required: Required, defaultValue: Default) {
-        super("boolean", required, defaultValue);
+    public get type() { return "boolean"; }
+
+    protected _validate(source: SourceValue<BooleanSource, Required, Default>, pass: ValidationPass): ModelValue<BooleanSource, boolean, Required, Default> {
+        return source as boolean;
     }
 
     public convert(value: BooleanSource, pass: ValidationPass): boolean {

@@ -1,15 +1,18 @@
 import { ValidationPass } from "../error/ValidationPass";
-import type { AdditionalValidationPasses, AdditionalValidator, AdditionalValidatorAfterType, AdditionalValidatorBeforeType, AdditionalValidatorType, DefaultValue, EnsureValidator, ModelValue, SourceValue } from "../typing/toolbox";
+import type { ValidationError } from "../error/ValidationError";
+import type {
+    AdditionalValidationPasses, AdditionalValidator, AdditionalValidatorAfterType,
+    AdditionalValidatorBeforeType, AdditionalValidatorType, DefaultValue,
+    EnsureValidator, ModelValue, SourceValue
+} from "../typing/toolbox";
 
 export abstract class BaseSchema<Source, Model, Required extends boolean, Default extends DefaultValue<Source>> {
 
-    public readonly type: string;
     protected readonly _required: Required;
     protected readonly _default: Default;
     protected readonly _additionalValidationPasses: AdditionalValidationPasses<Source, Model>;
 
-    public constructor(type: string, required: Required, defaultValue: Default, additionalValidationPasses?: AdditionalValidationPasses<Source, Model>) {
-        this.type = type;
+    public constructor(required: Required, defaultValue: Default, additionalValidationPasses?: AdditionalValidationPasses<Source, Model>) {
         this._required = required;
         this._default = defaultValue;
 
@@ -22,6 +25,8 @@ export abstract class BaseSchema<Source, Model, Required extends boolean, Defaul
             afterAll: []
         } : additionalValidationPasses;
     }
+
+    public abstract get type(): string;
 
     public validate(source: SourceValue<Source, Required, Default>, pass?: ValidationPass): ModelValue<Source, Model, Required, Default> {
         pass = this._ensurePass(source, pass);
@@ -37,20 +42,24 @@ export abstract class BaseSchema<Source, Model, Required extends boolean, Defaul
             if (BaseSchema.getType(result) !== this.type) {
                 result = this.convert(result, pass);
             }
+            result = this._validate(result, pass);
             result = this._executeAdditionalValidator(result, pass, "afterConversion");
         } else {
-            result = this._executeAdditionalValidator(result, pass, "afterConversion");
             if (this._required) {
                 throw pass.getError(pass.path.length > 0 ? `Missing required value at "${pass.path.join(".")}".` : "Missing required value.");
             } else {
                 result = undefined;
             }
+            result = this._validate(result, pass);
+            result = this._executeAdditionalValidator(result, pass, "afterConversion");
         }
         if (this._required || result !== undefined) {
             result = this._executeAdditionalValidator(result, pass, "afterAll");
         }
         return result;
     }
+
+    protected abstract _validate(source: SourceValue<Source, Required, Default>, pass: ValidationPass): ModelValue<Source, Model, Required, Default>;
 
     public abstract convert(value: Source, pass: ValidationPass): Model;
 
@@ -62,6 +71,15 @@ export abstract class BaseSchema<Source, Model, Required extends boolean, Defaul
         return this;
     }
 
+    /**
+     * Ensures a condition is true during the associated schema's validation pass.
+     * 
+     * @note See {@link EnsureValidator EnsureValidator}.
+     * 
+     * @param ensureValidator A validator to ensure a condition is passed.
+     * @param message The message to use for a thrown {@link ValidationError ValidationError} if ensureValidator fails.
+     * @returns The schema instance for chaining.
+     */
     public ensure(ensureValidator: EnsureValidator<Model>, message?: string): this {
         this.custom((value, pass) => {
             pass.assert(ensureValidator(value, pass), message === undefined ? `Failed to ensure value.` : message);
@@ -96,7 +114,13 @@ export abstract class BaseSchema<Source, Model, Required extends boolean, Defaul
         return String(value);
     }
 
-    public abstract getJsonSchema(): object;
+    public getJsonSchema(): object {
+        console.warn(`"getJsonSchema" is not implemented in the "${this.constructor.name}" schema class!`);
+        return {
+            type: "unknown",
+            description: `"getJsonSchema" is not implemented in the "${this.constructor.name}" schema class!`,
+        };
+    }
 
     protected _getJsonSchemaDescription() {
         const pass = new ValidationPass(this, this._default);

@@ -8,14 +8,23 @@ export class EnumerationSchema<Members extends string[], Required extends boolea
     public readonly members: Members;
 
     public constructor(members: Members, required: Required, defaultValue: Default) {
-        super("string", required, defaultValue);
+        super(required, defaultValue);
         this.members = members;
     }
 
-    public validate(source: SourceValue<Members[number], Required, Default>, pass?: ValidationPass):
+    public get type() { return "string"; }
+
+    // public validate(source: SourceValue<Members[number], Required, Default>, pass?: ValidationPass):
+    //     ModelValue<Members[number], Members[number], Required, Default> {
+    //     pass = this._ensurePass(source, pass);
+    //     const result: any = super.validate(source, pass);
+    //     pass.assert(this.members.includes(result), `"${result}" is not a valid enumeration value (Expected: ${this.members.join(", ")}).`);
+    //     return result;
+    // }
+
+    public _validate(source: SourceValue<Members[number], Required, Default>, pass: ValidationPass):
         ModelValue<Members[number], Members[number], Required, Default> {
-        pass = this._ensurePass(source, pass);
-        const result: any = super.validate(source, pass);
+        const result: any = source;
         pass.assert(this.members.includes(result), `"${result}" is not a valid enumeration value (Expected: ${this.members.join(", ")}).`);
         return result;
     }
