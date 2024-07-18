@@ -1,5 +1,4 @@
 export * from "./builder";
-export { Schema as $ } from "./builder";
 export * from "./error/ValidationError";
 export * from "./error/ValidationPass";
 export * from "./schema/AnySchema";
@@ -15,3 +14,6 @@ export * from "./schema/OrSetSchema";
 export * from "./schema/StringSchema";
 export * from "./typing/extended";
 export * from "./typing/toolbox";
+
+export { Schema as $ } from "./builder";
+
