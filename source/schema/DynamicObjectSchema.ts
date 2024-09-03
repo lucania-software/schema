@@ -43,7 +43,7 @@ export class DynamicObjectSchema<Subschema extends BaseSchemaAny, Required exten
     //     return result;
     // }
 
-    public _validate(source: SourceValue<DynamicObjectSource<Subschema>, Required, Default>, pass: ValidationPass):
+    protected _validate(source: SourceValue<DynamicObjectSource<Subschema>, Required, Default>, pass: ValidationPass):
         ModelValue<DynamicObjectSource<Subschema>, DynamicObjectModel<Subschema>, Required, Default> {
         const result: any = source;
         if (result !== undefined) {

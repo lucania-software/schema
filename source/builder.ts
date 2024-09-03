@@ -52,31 +52,33 @@ export namespace Schema {
     export function Object<Subschema extends ObjectSubschema>(subschema: Subschema): ObjectSchema<Subschema, true, undefined>;
     export function Object<Subschema extends ObjectSubschema, Required extends boolean>(subschema: Subschema, required: Required): ObjectSchema<Subschema, Required, undefined>;
     export function Object<Subschema extends ObjectSubschema, Required extends boolean, Default extends DefaultValue<ObjectSource<Subschema>>>
-        (subschema: Subschema, required: Required, defaultValue: Default): ObjectSchema<Subschema, Required, Default>;
-    export function Object(subschema: { [Key: string]: BaseSchemaAny }, required: boolean = true, defaultValue: any = undefined) {
+    (subschema: Subschema, required: Required, defaultValue: Default): ObjectSchema<Subschema, Required, Default>;
+    export function Object(subschema: {
+        [Key: string]: BaseSchemaAny
+    }, required: boolean = true, defaultValue: any = undefined) {
         return new ObjectSchema(subschema, required, defaultValue);
     }
 
     export function Array<Subschema extends BaseSchemaAny>(subschema: Subschema): ArraySchema<Subschema, true, undefined>;
     export function Array<Subschema extends BaseSchemaAny, Required extends boolean>(subschema: Subschema, required: Required): ArraySchema<Subschema, Required, undefined>;
     export function Array<Subschema extends BaseSchemaAny, Required extends boolean, Default extends DefaultValue<ArraySource<Subschema>>>
-        (subschema: Subschema, required: Required, defaultValue: Default): ArraySchema<Subschema, Required, Default>;
+    (subschema: Subschema, required: Required, defaultValue: Default): ArraySchema<Subschema, Required, Default>;
     export function Array(subschema: BaseSchemaAny, required: boolean = true, defaultValue: any = undefined) {
         return new ArraySchema(subschema, required, defaultValue);
     }
 
-    export function Enumeration<Members extends string[]>(subschema: TypedMembers<Members>): EnumerationSchema<Members, true, undefined>;
-    export function Enumeration<Members extends string[], Required extends boolean>(subschema: TypedMembers<Members>, required: Required): EnumerationSchema<Members, Required, undefined>;
-    export function Enumeration<Members extends string[], Required extends boolean, Default extends DefaultValue<Members[number]>>
-        (subschema: TypedMembers<Members>, required: Required, defaultValue: Default): EnumerationSchema<Members, Required, Default>;
-    export function Enumeration(members: TypedMembers<string[]>, required: boolean = true, defaultValue: any = undefined) {
-        return new EnumerationSchema(members.$members, required, defaultValue);
+    export function Enumeration<Members extends string>(subschema: Members[]): EnumerationSchema<Members, true, undefined>;
+    export function Enumeration<Members extends string, Required extends boolean>(subschema: Members[], required: Required): EnumerationSchema<Members, Required, undefined>;
+    export function Enumeration<Members extends string, Required extends boolean, Default extends DefaultValue<Members>>
+    (subschema: Members[], required: Required, defaultValue: Default): EnumerationSchema<Members, Required, Default>;
+    export function Enumeration(members: string[], required: boolean = true, defaultValue: any = undefined) {
+        return new EnumerationSchema(members, required, defaultValue);
     }
 
     export function DynamicObject<Subschema extends BaseSchemaAny>(subschema: Subschema): DynamicObjectSchema<Subschema, true, undefined>;
     export function DynamicObject<Subschema extends BaseSchemaAny, Required extends boolean>(subschema: Subschema, required: Required): DynamicObjectSchema<Subschema, Required, undefined>;
     export function DynamicObject<Subschema extends BaseSchemaAny, Required extends boolean, Default extends DefaultValue<DynamicObjectSource<Subschema>>>
-        (subschema: Subschema, required: Required, defaultValue: Default): DynamicObjectSchema<Subschema, Required, Default>;
+    (subschema: Subschema, required: Required, defaultValue: Default): DynamicObjectSchema<Subschema, Required, Default>;
     export function DynamicObject(subschema: BaseSchemaAny, required: boolean = true, defaultValue: any = undefined) {
         return new DynamicObjectSchema(subschema, required, defaultValue);
     }
@@ -84,7 +86,7 @@ export namespace Schema {
     export function OrSet<MemberSchemas extends BaseSchemaAny[]>(subschema: TypedMembers<MemberSchemas>): OrSetSchema<MemberSchemas, true, undefined>;
     export function OrSet<MemberSchemas extends BaseSchemaAny[], Required extends boolean>(subschema: TypedMembers<MemberSchemas>, required: Required): OrSetSchema<MemberSchemas, Required, undefined>;
     export function OrSet<MemberSchemas extends BaseSchemaAny[], Required extends boolean, Default extends DefaultValue<OrSetSchemaSource<MemberSchemas>>>
-        (subschema: TypedMembers<MemberSchemas>, required: Required, defaultValue: Default): OrSetSchema<MemberSchemas, Required, Default>;
+    (subschema: TypedMembers<MemberSchemas>, required: Required, defaultValue: Default): OrSetSchema<MemberSchemas, Required, Default>;
     export function OrSet(members: TypedMembers<BaseSchemaAny[]>, required: boolean = true, defaultValue: any = undefined) {
         return new OrSetSchema(members.$members, required, defaultValue);
     }
@@ -95,12 +97,19 @@ export namespace Schema {
         return { $members: members };
     }
 
+    export function Keys<Object extends object>(object: Object) {
+        return globalThis.Object.keys(object) as (keyof Object)[];
+    }
+    export function Values<Object extends object>(object: Object) {
+        return globalThis.Object.values(object) as (Object[keyof Object])[];
+    }
+
     export type Model<Schema extends BaseSchemaAny> = Schema extends BaseSchema<infer Source, infer Model, infer Require, infer Default> ? (
         ModelValue<Source, Model, Require, Default>
-    ) : never;
+        ) : never;
 
     export type Source<Schema extends BaseSchemaAny> = Schema extends BaseSchema<infer Source, any, infer Require, infer Default> ? (
         SourceValue<Source, Require, Default>
-    ) : never;
+        ) : never;
 
 }

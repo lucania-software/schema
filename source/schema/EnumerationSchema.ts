@@ -2,12 +2,12 @@ import { DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
 import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchema } from "./BaseSchema";
 
-export class EnumerationSchema<Members extends string[], Required extends boolean, Default extends DefaultValue<Members[number]>>
-    extends BaseSchema<Members[number], Members[number], Required, Default> {
+export class EnumerationSchema<Members extends string, Required extends boolean, Default extends DefaultValue<Members>>
+    extends BaseSchema<Members, Members, Required, Default> {
 
-    public readonly members: Members;
+    public readonly members: Members[];
 
-    public constructor(members: Members, required: Required, defaultValue: Default) {
+    public constructor(members: Members[], required: Required, defaultValue: Default) {
         super(required, defaultValue);
         this.members = members;
     }
@@ -22,14 +22,14 @@ export class EnumerationSchema<Members extends string[], Required extends boolea
     //     return result;
     // }
 
-    public _validate(source: SourceValue<Members[number], Required, Default>, pass: ValidationPass):
-        ModelValue<Members[number], Members[number], Required, Default> {
+    protected _validate(source: SourceValue<Members, Required, Default>, pass: ValidationPass):
+        ModelValue<Members, Members, Required, Default> {
         const result: any = source;
         pass.assert(this.members.includes(result), `"${result}" is not a valid enumeration value (Expected: ${this.members.join(", ")}).`);
         return result;
     }
 
-    public convert(value: Members[number], pass: ValidationPass): Members[number] {
+    public convert(value: Members, pass: ValidationPass): Members {
         return value;
     }
 
