@@ -6,6 +6,7 @@ export class ValidationError extends Error {
 
     public constructor(pass: ValidationPass, message: string) {
         super(message);
+        this.name = ValidationError.name;
         this.pass = pass;
     }
 

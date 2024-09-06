@@ -28,8 +28,41 @@ export class StringSchema<Required extends boolean, Default extends DefaultValue
         return value.toString();
     }
 
+    /**
+     * Trims strings validated by this schema.
+     * @see {@link String.trim}
+     */
+    public trim() {
+        return this.custom((model) => model.trim());
+    }
+
+    /**
+     * Makes strings validated by this schema lowercase.
+     */
+    public lower() {
+        return this.custom((model) => model.toLowerCase());
+    }
+
+    /**
+     * Makes strings validated by this schema uppercase.
+     */
+    public upper() {
+        return this.custom((model) => model.toUpperCase());
+    }
+
+    /**
+     * Ensures that a string validated by this schema has a minimum (inclusive) and maximum (inclusive) length.
+     */
     public length(minimum: number, maximum: number): this;
+    /**
+     * Ensures that a string validated by this schema has a minimum (inclusive) and maximum (inclusive) length.
+     * With a custom error message.
+     */
     public length(minimum: number, maximum: number, message: string): this;
+    /**
+     * Ensures that a string validated by this schema has a minimum (inclusive) and maximum (inclusive) length.
+     * With custom error messages for too long, and too short.
+     */
     public length(minimum: number, maximum: number, tooShortMessage: string, tooLongMessage: string): this;
     public length(minimum: number, maximum: number, messageA?: string, messageB?: string) {
         return this.custom((model, pass) => {
@@ -40,6 +73,10 @@ export class StringSchema<Required extends boolean, Default extends DefaultValue
         }, "afterAll");
     }
 
+    /**
+     * Ensures a string validated by this schema matches a given regular expression.
+     * With an optional custom error message.
+     */
     public regex(expression: RegExp, message?: string) {
         return this.custom((model, pass) => {
             pass.assert(expression.test(model), message === undefined ? `String "${model}" failed regular expression check. (${expression})` : message);
