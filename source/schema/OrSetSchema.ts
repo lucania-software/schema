@@ -4,24 +4,22 @@ import { DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
 import { BaseSchema } from "./BaseSchema";
 
 export type OrSetSchemaSource<MemberSchemas extends BaseSchemaAny[]> = {
-    [Key in keyof MemberSchemas]: (
-        MemberSchemas[Key] extends BaseSchema<infer Source, any, infer Required, infer Default> ? (
-            SourceValue<Source, Required, Default>
-        ) : never
-    )
+    [Key in keyof MemberSchemas]: MemberSchemas[Key] extends BaseSchema<infer Source, any, infer Required, infer Default> ?
+        SourceValue<Source, Required, Default>
+    :   never;
 }[number];
 
-export type OrSetSchemaModel<MemberSchemas extends BaseSchemaAny[]> = ({
-    [Key in keyof MemberSchemas]: (
-        MemberSchemas[Key] extends BaseSchema<infer Source, infer Model, infer Required, infer Default> ? (
-            ModelValue<Source, Model, Required, Default>
-        ) : never
-    )
-})[number];
+export type OrSetSchemaModel<MemberSchemas extends BaseSchemaAny[]> = {
+    [Key in keyof MemberSchemas]: MemberSchemas[Key] extends BaseSchema<infer Source, infer Model, infer Required, infer Default> ?
+        ModelValue<Source, Model, Required, Default>
+    :   never;
+}[number];
 
-export class OrSetSchema<MemberSchemas extends BaseSchemaAny[], Required extends boolean, Default extends DefaultValue<OrSetSchemaSource<MemberSchemas>>>
-    extends BaseSchema<OrSetSchemaSource<MemberSchemas>, OrSetSchemaModel<MemberSchemas>, Required, Default> {
-
+export class OrSetSchema<
+    MemberSchemas extends BaseSchemaAny[],
+    Required extends boolean,
+    Default extends DefaultValue<OrSetSchemaSource<MemberSchemas>>
+> extends BaseSchema<OrSetSchemaSource<MemberSchemas>, OrSetSchemaModel<MemberSchemas>, Required, Default> {
     public readonly schemas: MemberSchemas;
 
     public constructor(schemas: MemberSchemas, required: Required, defaultValue: Default) {
@@ -29,7 +27,9 @@ export class OrSetSchema<MemberSchemas extends BaseSchemaAny[], Required extends
         this.schemas = schemas;
     }
 
-    public get type() { return "string"; }
+    public get type() {
+        return "string";
+    }
 
     // public validate(source: SourceValue<OrSetSchemaSource<MemberSchemas>, Required, Default>, pass?: ValidationPass):
     //     ModelValue<OrSetSchemaSource<MemberSchemas>, OrSetSchemaModel<MemberSchemas>, Required, Default> {
@@ -56,8 +56,10 @@ export class OrSetSchema<MemberSchemas extends BaseSchemaAny[], Required extends
     //     return result;
     // }
 
-    public _validate(source: SourceValue<OrSetSchemaSource<MemberSchemas>, Required, Default>, pass: ValidationPass):
-        ModelValue<OrSetSchemaSource<MemberSchemas>, OrSetSchemaModel<MemberSchemas>, Required, Default> {
+    protected _validate(
+        source: SourceValue<OrSetSchemaSource<MemberSchemas>, Required, Default>,
+        pass: ValidationPass
+    ): ModelValue<OrSetSchemaSource<MemberSchemas>, OrSetSchemaModel<MemberSchemas>, Required, Default> {
         let result: any = source;
         if (result !== undefined) {
             let done = false;
@@ -65,17 +67,26 @@ export class OrSetSchema<MemberSchemas extends BaseSchemaAny[], Required extends
             for (let i = 0; i < this.schemas.length && !done; i++) {
                 const schema = this.schemas[i];
                 try {
-                    result = schema.validate(result, pass);
-                    done = true;
+                    if (BaseSchema.getType(result) === schema.type) {
+                        result = schema.validate(result, pass);
+                        done = true;
+                    }
                 } catch (error) {
                     if (error instanceof Error) {
                         failureMessages.push(`Schema #${i + 1}: ${error.message}`);
                     } else {
                         failureMessages.push(`Schema #${i + 1}: ${String(error)}`);
                     }
-                    pass.assert(failureMessages.length !== this.schemas.length, `Supplied value didn't match any schemas in or-set.\n${failureMessages.join("\n")}`);
                 }
             }
+            if (!done) {
+                failureMessages.push(`Conversions are ignored when using OrSet.`);
+            }
+            pass.assert(
+                failureMessages.length === 0,
+                `Provided value (${BaseSchema.getType(result)}) matched no schemas ` +
+                    `(${this.schemas.map((schema) => schema.type).join(", ")}).\n${failureMessages.join("\n")}`
+            );
         }
         return result;
     }
@@ -87,5 +98,4 @@ export class OrSetSchema<MemberSchemas extends BaseSchemaAny[], Required extends
     public getJsonSchema(): object {
         return { oneOf: this.schemas.map((schema) => schema.getJsonSchema()) };
     }
-
 }
