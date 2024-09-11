@@ -53,22 +53,6 @@ export class ObjectSchema<Subschema extends ObjectSubschema, Required extends bo
 
     public get type() { return "object"; }
 
-    // public validate(source: SourceValue<ObjectSource<Subschema>, Required, Default>, pass?: ValidationPass):
-    //     ModelValue<ObjectSource<Subschema>, ObjectModel<Subschema>, Required, Default> {
-    //     pass = this._ensurePass(source, pass);
-    //     const input: any = super.validate(source, pass);
-    //     let output: any = input;
-    //     if (typeof input === "object" && input !== null) {
-    //         output = {};
-    //         for (const key in this.subschema) {
-    //             const nestedSchema = this.subschema[key];
-    //             const nestedValue = input[key];
-    //             output[key] = this.subschema[key].validate(input[key], pass.next([...pass.path, key], nestedSchema, nestedValue));
-    //         }
-    //     }
-    //     return output;
-    // }
-
     protected _validate(source: SourceValue<ObjectSource<Subschema>, Required, Default>, pass: ValidationPass): ModelValue<ObjectSource<Subschema>, ObjectModel<Subschema>, Required, Default> {
         const input: any = source;
         let output: any = input;
