@@ -85,7 +85,7 @@ export class StringSchema<Required extends boolean, Default extends DefaultValue
     }
 
     public clone(): StringSchema<Required, Default> {
-        return new StringSchema(this._required, this._default);
+        return new StringSchema(this._required, this._default, this._additionalValidationPasses);
     }
 
     public getJsonSchema(): object {

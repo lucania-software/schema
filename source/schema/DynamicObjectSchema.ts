@@ -1,6 +1,6 @@
 import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchemaAny } from "../typing/extended";
-import type { DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
+import type { AdditionalValidationPasses, DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
 import { BaseSchema } from "./BaseSchema";
 
 export type DynamicObjectSource<Subschema extends BaseSchemaAny> = ({
@@ -23,8 +23,13 @@ export class DynamicObjectSchema<Subschema extends BaseSchemaAny, Required exten
 
     public readonly subschema: Subschema;
 
-    public constructor(subschema: Subschema, required: Required, defaultValue: Default) {
-        super(required, defaultValue);
+    public constructor(
+        subschema: Subschema,
+        required: Required,
+        defaultValue: Default,
+        additionalValidationPasses?: AdditionalValidationPasses<DynamicObjectSource<Subschema>, DynamicObjectModel<Subschema>>
+    ) {
+        super(required, defaultValue, additionalValidationPasses);
         this.subschema = subschema;
     }
 
@@ -73,7 +78,7 @@ export class DynamicObjectSchema<Subschema extends BaseSchemaAny, Required exten
     }
 
     public clone(): DynamicObjectSchema<Subschema, Required, Default> {
-        return new DynamicObjectSchema(this.subschema.clone() as Subschema, this._required, this._default);
+        return new DynamicObjectSchema(this.subschema.clone() as Subschema, this._required, this._default, this._additionalValidationPasses);
     }
 
     public toString(level: number = 0) {

@@ -1,6 +1,6 @@
-import type { DefaultValue, Merge, ModelRequirement, ModelValue, SourceRequirement, SourceValue } from "../typing/toolbox";
 import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchemaAny } from "../typing/extended";
+import type { AdditionalValidationPasses, DefaultValue, Merge, ModelRequirement, ModelValue, SourceRequirement, SourceValue } from "../typing/toolbox";
 import { BaseSchema } from "./BaseSchema";
 
 export type ObjectSubschema = { [Key: string]: BaseSchemaAny };
@@ -46,8 +46,13 @@ export class ObjectSchema<Subschema extends ObjectSubschema, Required extends bo
 
     public readonly subschema: Subschema;
 
-    public constructor(subschema: Subschema, required: Required, defaultValue: Default) {
-        super(required, defaultValue);
+    public constructor(
+        subschema: Subschema,
+        required: Required,
+        defaultValue: Default,
+        additionalValidationPasses?: AdditionalValidationPasses<ObjectSource<Subschema>, ObjectModel<Subschema>>
+    ) {
+        super(required, defaultValue, additionalValidationPasses);
         this.subschema = subschema;
     }
 
@@ -112,7 +117,7 @@ export class ObjectSchema<Subschema extends ObjectSubschema, Required extends bo
         for (const key in this.subschema) {
             subschema[key] = this.subschema[key].clone() as any;
         }
-        return new ObjectSchema(subschema, this._required, this._default);
+        return new ObjectSchema(subschema, this._required, this._default, this._additionalValidationPasses);
     }
 
     public toString(level: number = 0) {

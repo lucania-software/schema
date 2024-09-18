@@ -71,7 +71,7 @@ export class DateSchema<Required extends boolean, Default extends DefaultValue<D
     }
 
     public clone(): DateSchema<Required, Default> {
-        return new DateSchema(this._required, this._default);
+        return new DateSchema(this._required, this._default, this._additionalValidationPasses);
     }
 
     public getJsonSchema(): object {

@@ -1,6 +1,6 @@
 import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchemaAny } from "../typing/extended";
-import type { DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
+import type { AdditionalValidationPasses, DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
 import { BaseSchema } from "./BaseSchema";
 
 export type ArraySource<Subschema extends BaseSchemaAny> = (
@@ -20,8 +20,13 @@ export class ArraySchema<Subschema extends BaseSchemaAny, Required extends boole
 
     public readonly subschema: Subschema;
 
-    public constructor(subschema: Subschema, required: Required, defaultValue: Default) {
-        super(required, defaultValue);
+    public constructor(
+        subschema: Subschema,
+        required: Required,
+        defaultValue: Default,
+        additionalValidationPasses?: AdditionalValidationPasses<ArraySource<Subschema>, ArrayModel<Subschema>>
+    ) {
+        super(required, defaultValue, additionalValidationPasses);
         this.subschema = subschema;
     }
 
@@ -70,7 +75,7 @@ export class ArraySchema<Subschema extends BaseSchemaAny, Required extends boole
     }
 
     public clone(): ArraySchema<Subschema, Required, Default> {
-        return new ArraySchema(this.subschema.clone() as Subschema, this._required, this._default);
+        return new ArraySchema(this.subschema.clone() as Subschema, this._required, this._default, this._additionalValidationPasses);
     }
 
     public toString(level: number = 0) {

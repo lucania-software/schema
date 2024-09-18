@@ -29,7 +29,7 @@ export class BooleanSchema<Required extends boolean, Default extends DefaultValu
     }
 
     public clone(): BooleanSchema<Required, Default> {
-        return new BooleanSchema(this._required, this._default);
+        return new BooleanSchema(this._required, this._default, this._additionalValidationPasses);
     }
 
     public getJsonSchema(): object {

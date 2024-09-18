@@ -1,6 +1,6 @@
 import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchemaAny } from "../typing/extended";
-import { DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
+import { AdditionalValidationPasses, DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
 import { BaseSchema } from "./BaseSchema";
 
 export type OrSetSchemaSource<MemberSchema extends BaseSchemaAny> = (
@@ -23,8 +23,13 @@ export class OrSetSchema<
 
     public readonly schemas: MemberSchema[];
 
-    public constructor(schemas: MemberSchema[], required: Required, defaultValue: Default) {
-        super(required, defaultValue);
+    public constructor(
+        schemas: MemberSchema[],
+        required: Required,
+        defaultValue: Default,
+        additionalValidationPasses?: AdditionalValidationPasses<OrSetSchemaSource<MemberSchema>, OrSetSchemaModel<MemberSchema>>
+    ) {
+        super(required, defaultValue, additionalValidationPasses);
         this.schemas = schemas;
     }
 
@@ -72,7 +77,7 @@ export class OrSetSchema<
     }
 
     public clone(): OrSetSchema<MemberSchema, Required, Default> {
-        return new OrSetSchema(this.schemas.map((schema) => schema.clone()) as MemberSchema[], this._required, this._default);
+        return new OrSetSchema(this.schemas.map((schema) => schema.clone()) as MemberSchema[], this._required, this._default, this._additionalValidationPasses);
     }
 
     public getJsonSchema(): object {

@@ -57,7 +57,7 @@ export class NumberSchema<Required extends boolean, Default extends DefaultValue
     }
 
     public clone(): NumberSchema<Required, Default> {
-        return new NumberSchema(this._required, this._default);
+        return new NumberSchema(this._required, this._default, this._additionalValidationPasses);
     }
 
     public getJsonSchema(): object {
