@@ -1,5 +1,5 @@
-import { DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
 import { ValidationPass } from "../error/ValidationPass";
+import { DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
 import { BaseSchema } from "./BaseSchema";
 
 export type NumberSource = number | bigint | string | boolean | null | undefined | Date;
@@ -54,6 +54,10 @@ export class NumberSchema<Required extends boolean, Default extends DefaultValue
             pass.assert(isNaN(model) === notANumber, message === undefined ? `Number ${model} failed not a number check. (${notANumber ? "Requires NaN" : "Requires valid number"})` : message);
             return model;
         }, "afterAll");
+    }
+
+    public clone(): NumberSchema<Required, Default> {
+        return new NumberSchema(this._required, this._default);
     }
 
     public getJsonSchema(): object {

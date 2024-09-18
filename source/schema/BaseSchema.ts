@@ -1,5 +1,6 @@
-import { ValidationPass } from "../error/ValidationPass";
 import type { ValidationError } from "../error/ValidationError";
+import { ValidationPass } from "../error/ValidationPass";
+import { BaseSchemaAny } from "../typing/extended";
 import type {
     AdditionalValidationPasses, AdditionalValidator, AdditionalValidatorAfterType,
     AdditionalValidatorBeforeType, AdditionalValidatorType, DefaultValue,
@@ -156,6 +157,12 @@ export abstract class BaseSchema<Source, Model, Required extends boolean, Defaul
             source = additionalValidationPass(source, pass);
         }
         return source;
+    }
+
+    public abstract clone(): BaseSchemaAny;
+
+    public toString(level: number = 0) {
+        return this.constructor.name;
     }
 
     /**

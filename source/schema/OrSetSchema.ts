@@ -71,6 +71,10 @@ export class OrSetSchema<
         return value as any;
     }
 
+    public clone(): OrSetSchema<MemberSchema, Required, Default> {
+        return new OrSetSchema(this.schemas.map((schema) => schema.clone()) as MemberSchema[], this._required, this._default);
+    }
+
     public getJsonSchema(): object {
         return { oneOf: this.schemas.map((schema) => schema.getJsonSchema()) };
     }

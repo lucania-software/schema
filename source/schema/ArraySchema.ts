@@ -69,4 +69,12 @@ export class ArraySchema<Subschema extends BaseSchemaAny, Required extends boole
         };
     }
 
+    public clone(): ArraySchema<Subschema, Required, Default> {
+        return new ArraySchema(this.subschema.clone() as Subschema, this._required, this._default);
+    }
+
+    public toString(level: number = 0) {
+        return `${super.toString(level)}(${this.subschema.toString(level)}[])`;
+    }
+
 }

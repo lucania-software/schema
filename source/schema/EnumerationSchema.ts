@@ -1,6 +1,7 @@
 import { DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
 import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchema } from "./BaseSchema";
+import { BaseSchemaAny } from "../typing/extended";
 
 export class EnumerationSchema<Members extends string, Required extends boolean, Default extends DefaultValue<Members>>
     extends BaseSchema<Members, Members, Required, Default> {
@@ -31,6 +32,10 @@ export class EnumerationSchema<Members extends string, Required extends boolean,
 
     public convert(value: Members, pass: ValidationPass): Members {
         return value;
+    }
+
+    public clone(): EnumerationSchema<Members, Required, Default> {
+        return new EnumerationSchema([...this.members], this._required, this._default);
     }
 
     public getJsonSchema(): object {

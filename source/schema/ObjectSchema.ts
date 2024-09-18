@@ -107,4 +107,25 @@ export class ObjectSchema<Subschema extends ObjectSubschema, Required extends bo
         };
     }
 
+    public clone(): ObjectSchema<Subschema, Required, Default> {
+        const subschema = {} as Subschema;
+        for (const key in this.subschema) {
+            subschema[key] = this.subschema[key].clone() as any;
+        }
+        return new ObjectSchema(subschema, this._required, this._default);
+    }
+
+    public toString(level: number = 0) {
+        const indent = "  ";
+        const prefix = indent.repeat(level);
+        const pieces = [];
+        pieces.push(`${super.toString()}({\n`);
+        for (const schemaKey in this.subschema) {
+            const subschema = this.subschema[schemaKey];
+            pieces.push(`${prefix}${indent}${schemaKey}: ${subschema.toString(level + 1)}\n`);
+        }
+        pieces.push(`${prefix}})`);
+        return pieces.join("");
+    }
+
 }

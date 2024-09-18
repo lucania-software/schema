@@ -1,5 +1,5 @@
-import { DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
 import { ValidationPass } from "../error/ValidationPass";
+import { DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
 import { BaseSchema } from "./BaseSchema";
 
 type StandardDate = globalThis.Date;
@@ -68,6 +68,10 @@ export class DateSchema<Required extends boolean, Default extends DefaultValue<D
             );
             return model;
         }, "afterAll");
+    }
+
+    public clone(): DateSchema<Required, Default> {
+        return new DateSchema(this._required, this._default);
     }
 
     public getJsonSchema(): object {

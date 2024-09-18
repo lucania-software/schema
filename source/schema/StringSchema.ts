@@ -84,6 +84,10 @@ export class StringSchema<Required extends boolean, Default extends DefaultValue
         }, "afterAll");
     }
 
+    public clone(): StringSchema<Required, Default> {
+        return new StringSchema(this._required, this._default);
+    }
+
     public getJsonSchema(): object {
         return {
             type: "string",

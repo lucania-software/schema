@@ -1,6 +1,6 @@
-import type { DefaultValue, Merge, ModelValue, SourceRequirement, SourceValue } from "../typing/toolbox";
 import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchemaAny } from "../typing/extended";
+import type { DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
 import { BaseSchema } from "./BaseSchema";
 
 export type DynamicObjectSource<Subschema extends BaseSchemaAny> = ({
@@ -70,6 +70,16 @@ export class DynamicObjectSchema<Subschema extends BaseSchemaAny, Required exten
             description: this._getJsonSchemaDescription(),
             additionalProperties: this.subschema.getJsonSchema()
         };
+    }
+
+    public clone(): DynamicObjectSchema<Subschema, Required, Default> {
+        return new DynamicObjectSchema(this.subschema.clone() as Subschema, this._required, this._default);
+    }
+
+    public toString(level: number = 0) {
+        const indent = "  ";
+        const prefix = indent.repeat(level);
+        return `${super.toString(level)}({\n${prefix}${indent}[string]: ${this.subschema.toString(level)}\n${prefix}})`;
     }
 
 }
