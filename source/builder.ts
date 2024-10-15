@@ -113,6 +113,15 @@ export namespace Schema {
     export function Members<Member extends number[]>(...members: Member): TypedMembers<Member[number]>;
     export function Members<Member extends any[]>(...members: Member): TypedMembers<Member[number]>;
     export function Members<Member extends any[]>(...members: Member): TypedMembers<Member[number]> {
+        /* 
+         * HACK START: The hermes JS engine doesn't use globalThis.Array when interpreting `...members`
+         * It uses `Array`, which is already defined in this namespace.
+         */
+        if (!globalThis.Array.isArray(members)) {
+            const validArrayEntries = globalThis.Object.entries(members).filter(([key]) => !isNaN(key as any));
+            members = validArrayEntries.map(([_, value]) => value) as Member;
+        }
+        /* HACK END */
         return { $members: members };
     }
 
