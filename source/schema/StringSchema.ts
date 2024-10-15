@@ -3,6 +3,7 @@ import { DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
 import { BaseSchema } from "./BaseSchema";
 
 export type StringSource = string | number | boolean | null | undefined | Date;
+
 export class StringSchema<Required extends boolean, Default extends DefaultValue<StringSource>>
     extends BaseSchema<StringSource, string, Required, Default> {
 
@@ -13,8 +14,8 @@ export class StringSchema<Required extends boolean, Default extends DefaultValue
     // public optional() { return new StringSchema(false, this._default, this._additionalValidationPasses); }
     // public default<Default extends DefaultValue<StringSource>>(defaultValue: Default) { return new StringSchema(this._required, defaultValue, this._additionalValidationPasses); }
 
-    protected _validate(source: SourceValue<StringSource, Required, Default>, pass: ValidationPass): ModelValue<StringSource, string, Required, Default> {
-        return source as string;
+    protected _validate(source: ModelValue<StringSource, string, Required, Default>, pass: ValidationPass): ModelValue<StringSource, string, Required, Default> {
+        return source;
     }
 
     public convert(value: StringSource, pass: ValidationPass): string {

@@ -7,7 +7,7 @@ export class AnySchema<Required extends boolean, Default extends DefaultValue<an
 
     public get type() { return "any"; }
 
-    protected _validate(source: SourceValue<any, Required, Default>, pass: ValidationPass): ModelValue<any, any, Required, Default> {
+    protected _validate(source: ModelValue<any, any, Required, Default>, pass: ValidationPass): ModelValue<any, any, Required, Default> {
         return source;
     }
 

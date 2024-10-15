@@ -38,10 +38,10 @@ export class OrSetSchema<
     }
 
     protected _validate(
-        source: SourceValue<OrSetSchemaSource<MemberSchema>, Required, Default>,
+        source: ModelValue<OrSetSchemaSource<MemberSchema>, OrSetSchemaModel<MemberSchema>, Required, Default>,
         pass: ValidationPass
     ): ModelValue<OrSetSchemaSource<MemberSchema>, OrSetSchemaModel<MemberSchema>, Required, Default> {
-        let result: any = source;
+        let result = source;
         if (result !== undefined) {
             let done = false;
             const failureMessages: string[] = [];
@@ -61,7 +61,7 @@ export class OrSetSchema<
                 }
             }
             if (!done) {
-                failureMessages.push(`Conversions are ignored when using OrSet.`);
+                failureMessages.push(`Conversions for schemas in an OrSet are disabled.`);
             }
             pass.assert(
                 failureMessages.length === 0,

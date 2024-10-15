@@ -58,7 +58,8 @@ export class ObjectSchema<Subschema extends ObjectSubschema, Required extends bo
 
     public get type() { return "object"; }
 
-    protected _validate(source: SourceValue<ObjectSource<Subschema>, Required, Default>, pass: ValidationPass): ModelValue<ObjectSource<Subschema>, ObjectModel<Subschema>, Required, Default> {
+    protected _validate(source: ModelValue<ObjectSource<Subschema>, ObjectModel<Subschema>, Required, Default>, pass: ValidationPass):
+        ModelValue<ObjectSource<Subschema>, ObjectModel<Subschema>, Required, Default> {
         const input: any = source;
         let output: any = input;
         if (typeof input === "object" && input !== null) {

@@ -8,8 +8,9 @@ export class BooleanSchema<Required extends boolean, Default extends DefaultValu
 
     public get type() { return "boolean"; }
 
-    protected _validate(source: SourceValue<BooleanSource, Required, Default>, pass: ValidationPass): ModelValue<BooleanSource, boolean, Required, Default> {
-        return source as boolean;
+    protected _validate(source: ModelValue<BooleanSource, boolean, Required, Default>, pass: ValidationPass):
+        ModelValue<BooleanSource, boolean, Required, Default> {
+        return source;
     }
 
     public convert(value: BooleanSource, pass: ValidationPass): boolean {

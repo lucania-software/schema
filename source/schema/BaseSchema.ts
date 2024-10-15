@@ -60,7 +60,7 @@ export abstract class BaseSchema<Source, Model, Required extends boolean, Defaul
         return result;
     }
 
-    protected abstract _validate(source: SourceValue<Source, Required, Default>, pass: ValidationPass): ModelValue<Source, Model, Required, Default>;
+    protected abstract _validate(source: ModelValue<Source, Model, Required, Default>, pass: ValidationPass): ModelValue<Source, Model, Required, Default>;
 
     public abstract convert(value: Source, pass: ValidationPass): Model;
 
@@ -161,8 +161,25 @@ export abstract class BaseSchema<Source, Model, Required extends boolean, Defaul
 
     public abstract clone(): BaseSchemaAny;
 
+    /**
+     * Converts this schema to a informational string representing this schema.
+     * 
+     * @note Details about this schema will be displayed in [square brackets].
+     * * [R] Indicates this schema is required.
+     * * [D] Indicates this schema has a default value.
+     * 
+     * @param level The nesting level. You needn't specify this externally.
+     * @returns A string representation of this schema.
+     */
     public toString(level: number = 0) {
-        return this.constructor.name;
+        const modifiers: string[] = [];
+        if (this._required) modifiers.push("R");
+        if (this._default !== undefined) modifiers.push("D");
+        if (modifiers.length > 0) {
+            return `${this.constructor.name}[${modifiers.join("")}]`;
+        } else {
+            return this.constructor.name;
+        }
     }
 
     /**

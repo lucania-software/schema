@@ -45,7 +45,8 @@ export class ArraySchema<Subschema extends BaseSchemaAny, Required extends boole
     //     return result;
     // }
 
-    protected _validate(source: SourceValue<ArraySource<Subschema>, Required, Default>, pass: ValidationPass): ModelValue<ArraySource<Subschema>, ArrayModel<Subschema>, Required, Default> {
+    protected _validate(source: ModelValue<ArraySource<Subschema>, ArrayModel<Subschema>, Required, Default>, pass: ValidationPass):
+        ModelValue<ArraySource<Subschema>, ArrayModel<Subschema>, Required, Default> {
         const result: any = [];
         if (source !== undefined) {
             for (const key in source) {

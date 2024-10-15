@@ -1,5 +1,5 @@
 import { ValidationPass } from "../error/ValidationPass";
-import { DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
+import { DefaultValue, ModelValue } from "../typing/toolbox";
 import { BaseSchema } from "./BaseSchema";
 
 type StandardDate = globalThis.Date;
@@ -10,7 +10,7 @@ export class DateSchema<Required extends boolean, Default extends DefaultValue<D
 
     public get type() { return "Date"; }
 
-    protected _validate(source: SourceValue<DateSource, Required, Default>, pass: ValidationPass): ModelValue<DateSource, Date, Required, Default> {
+    protected _validate(source: ModelValue<DateSource, Date, Required, Default>, pass: ValidationPass): ModelValue<DateSource, Date, Required, Default> {
         return source as Date;
     }
 

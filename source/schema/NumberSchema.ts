@@ -1,5 +1,5 @@
 import { ValidationPass } from "../error/ValidationPass";
-import { DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
+import { DefaultValue, ModelValue } from "../typing/toolbox";
 import { BaseSchema } from "./BaseSchema";
 
 export type NumberSource = number | bigint | string | boolean | null | undefined | Date;
@@ -8,8 +8,9 @@ export class NumberSchema<Required extends boolean, Default extends DefaultValue
 
     public get type() { return "number"; }
 
-    protected _validate(source: SourceValue<NumberSource, Required, Default>, pass: ValidationPass): ModelValue<NumberSource, number, Required, Default> {
-        return source as number;
+    protected _validate(source: ModelValue<NumberSource, number, Required, Default>, pass: ValidationPass):
+        ModelValue<NumberSource, number, Required, Default> {
+        return source;
     }
 
     public convert(value: NumberSource, pass: ValidationPass): number {
