@@ -288,17 +288,30 @@ export namespace Schema {
             }
             return validated;
         } else if (isSchemaArray(schema)) {
-            if (Array.isArray(source)) {
-                [schema] = schema;
-                const validated: any = [];
-                for (let i = 0; i < source.length; i++) {
-                    const result = _validate(schema, source[i], path, originalSchema, originalSource);
-                    if (result instanceof ValidationError) {
-                        return result;
+            if (typeof source === "object") {
+                if (source.constructor.name === "Object") {
+                    const keys = Object.keys(source);
+                    if (keys.some((key) => isNaN(parseInt(key)))) {
+                        return new ValidationError("incorrectType", schema, source, path, originalSchema, originalSource);
                     }
-                    validated[i] = result;
+                    const newSource: any = [];
+                    for (const key of keys) {
+                        newSource[key] = source[key];
+                    }
+                    source = newSource;
                 }
-                return validated;
+                if (Array.isArray(source)) {
+                    [schema] = schema;
+                    const validated: any = [];
+                    for (let i = 0; i < source.length; i++) {
+                        const result = _validate(schema, source[i], path, originalSchema, originalSource);
+                        if (result instanceof ValidationError) {
+                            return result;
+                        }
+                        validated[i] = result;
+                    }
+                    return validated;
+                }
             }
             const errorType = source === undefined || source === null ? "missing" : "incorrectType";
             return new ValidationError(errorType, schema, source, path, originalSchema, originalSource);
@@ -417,7 +430,7 @@ export namespace Schema {
 
         public static getMessage(type: ValidationErrorType, source: any, schema: Schema.Any, path: string[]): string {
             let sourceRepresentation = JSON.stringify(source);
-            if (isNaN(source)) {
+            if (typeof source === "number" && isNaN(source)) {
                 sourceRepresentation = "NaN";
             }
             switch (type) {
