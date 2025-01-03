@@ -72,8 +72,8 @@ export class StringSchema<Required extends boolean, Default extends DefaultValue
     public length(minimum: number, maximum: number, messageA?: string, messageB?: string) {
         return this.custom((model, pass) => {
             messageB = messageB === undefined ? messageA : messageB;
-            pass.assert(model.length >= minimum, messageA === undefined ? `String "${model}: failed minimum length check. (${minimum})` : messageA);
-            pass.assert(model.length <= maximum, messageB === undefined ? `String "${model}: failed maximum length check. (${maximum})` : messageB);
+            pass.assert(model.length >= minimum, messageA === undefined ? `String "${model}" failed minimum length check. (${minimum})` : messageA);
+            pass.assert(model.length <= maximum, messageB === undefined ? `String "${model}" failed maximum length check. (${maximum})` : messageB);
             return model;
         }, "afterAll");
     }
