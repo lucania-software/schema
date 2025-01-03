@@ -1,5 +1,5 @@
 import { ValidationPass } from "../error/ValidationPass";
-import { DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
+import { DefaultValue, ModelValue, ValidationOptions } from "../typing/toolbox";
 import { BaseSchema } from "./BaseSchema";
 
 export class AnySchema<Required extends boolean, Default extends DefaultValue<any>>
@@ -7,7 +7,7 @@ export class AnySchema<Required extends boolean, Default extends DefaultValue<an
 
     public get type() { return "any"; }
 
-    protected _validate(source: ModelValue<any, any, Required, Default>, pass: ValidationPass): ModelValue<any, any, Required, Default> {
+    protected _validate(source: ModelValue<any, any, Required, Default>, options: ValidationOptions, pass: ValidationPass): ModelValue<any, any, Required, Default> {
         return source;
     }
 

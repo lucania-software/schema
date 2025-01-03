@@ -1,6 +1,6 @@
 import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchemaAny } from "../typing/extended";
-import type { AdditionalValidationPasses, DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
+import type { AdditionalValidationPasses, DefaultValue, ModelValue, SourceValue, ValidationOptions } from "../typing/toolbox";
 import { BaseSchema } from "./BaseSchema";
 
 export type ArraySource<Subschema extends BaseSchemaAny> = (
@@ -32,26 +32,13 @@ export class ArraySchema<Subschema extends BaseSchemaAny, Required extends boole
 
     public get type() { return "array"; }
 
-    // public validate(source: SourceValue<ArraySource<Subschema>, Required, Default>, pass?: ValidationPass):
-    //     ModelValue<ArraySource<Subschema>, ArrayModel<Subschema>, Required, Default> {
-    //     pass = this._ensurePass(source, pass);
-    //     const result: any = super.validate(source, pass);
-    //     if (result !== undefined) {
-    //         for (const key in result) {
-    //             const nestedValue = result[key];
-    //             result[key] = this.subschema.validate(result[key], pass.next([...pass.path, key], this.subschema, nestedValue));
-    //         }
-    //     }
-    //     return result;
-    // }
-
-    protected _validate(source: ModelValue<ArraySource<Subschema>, ArrayModel<Subschema>, Required, Default>, pass: ValidationPass):
+    protected _validate(source: ModelValue<ArraySource<Subschema>, ArrayModel<Subschema>, Required, Default>, options: ValidationOptions, pass: ValidationPass):
         ModelValue<ArraySource<Subschema>, ArrayModel<Subschema>, Required, Default> {
         const result: any = [];
         if (source !== undefined) {
             for (const key in source) {
                 const nestedValue = source[key];
-                result[key] = this.subschema.validate(source[key], pass.next([...pass.path, key], this.subschema, nestedValue));
+                result[key] = this.subschema.validate(source[key], options, pass.next([...pass.path, key], this.subschema, nestedValue));
             }
         }
         return result;
@@ -63,7 +50,7 @@ export class ArraySchema<Subschema extends BaseSchemaAny, Required extends boole
         } else if (typeof value === "string") {
             return [value] as any;
         } else {
-            throw pass.getError(`Unable to convert ${BaseSchema.getType(value)} to array.`);
+            throw pass.causeError(`Unable to convert ${BaseSchema.getType(value)} to array.`);
         }
     }
 

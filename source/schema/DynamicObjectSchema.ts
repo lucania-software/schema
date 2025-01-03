@@ -1,6 +1,6 @@
 import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchemaAny } from "../typing/extended";
-import type { AdditionalValidationPasses, DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
+import type { AdditionalValidationPasses, DefaultValue, ModelValue, SourceValue, ValidationOptions } from "../typing/toolbox";
 import { BaseSchema } from "./BaseSchema";
 
 export type DynamicObjectSource<Subschema extends BaseSchemaAny> = ({
@@ -35,26 +35,13 @@ export class DynamicObjectSchema<Subschema extends BaseSchemaAny, Required exten
 
     public get type() { return "object"; }
 
-    // public validate(source: SourceValue<DynamicObjectSource<Subschema>, Required, Default>, pass?: ValidationPass):
-    //     ModelValue<DynamicObjectSource<Subschema>, DynamicObjectModel<Subschema>, Required, Default> {
-    //     pass = this._ensurePass(source, pass);
-    //     const result: any = super.validate(source, pass);
-    //     if (result !== undefined) {
-    //         for (const key in result) {
-    //             const nestedValue = result[key];
-    //             result[key] = this.subschema.validate(result[key], pass.next([...pass.path, key], this.subschema, nestedValue));
-    //         }
-    //     }
-    //     return result;
-    // }
-
-    protected _validate(source: ModelValue<DynamicObjectSource<Subschema>, DynamicObjectModel<Subschema>, Required, Default>, pass: ValidationPass):
+    protected _validate(source: ModelValue<DynamicObjectSource<Subschema>, DynamicObjectModel<Subschema>, Required, Default>, options: ValidationOptions, pass: ValidationPass):
         ModelValue<DynamicObjectSource<Subschema>, DynamicObjectModel<Subschema>, Required, Default> {
         const result: any = source;
         if (result !== undefined) {
             for (const key in result) {
                 const nestedValue = result[key];
-                result[key] = this.subschema.validate(result[key], pass.next([...pass.path, key], this.subschema, nestedValue));
+                result[key] = this.subschema.validate(result[key], options, pass.next([...pass.path, key], this.subschema, nestedValue));
             }
         }
         return result;

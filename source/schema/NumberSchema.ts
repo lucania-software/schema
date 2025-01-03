@@ -1,5 +1,5 @@
 import { ValidationPass } from "../error/ValidationPass";
-import { DefaultValue, ModelValue } from "../typing/toolbox";
+import { DefaultValue, ModelValue, ValidationOptions } from "../typing/toolbox";
 import { BaseSchema } from "./BaseSchema";
 
 export type NumberSource = number | bigint | string | boolean | null | undefined | Date;
@@ -8,7 +8,7 @@ export class NumberSchema<Required extends boolean, Default extends DefaultValue
 
     public get type() { return "number"; }
 
-    protected _validate(source: ModelValue<NumberSource, number, Required, Default>, pass: ValidationPass):
+    protected _validate(source: ModelValue<NumberSource, number, Required, Default>, options: ValidationOptions, pass: ValidationPass):
         ModelValue<NumberSource, number, Required, Default> {
         return source;
     }
@@ -25,20 +25,20 @@ export class NumberSchema<Required extends boolean, Default extends DefaultValue
         } else if (value instanceof Date) {
             return value.getTime();
         } else {
-            throw pass.getError(`Unable to convert ${BaseSchema.getType(value)} to number.`);
+            throw pass.causeError(`Unable to convert ${BaseSchema.getType(value)} to number.`);
         }
     }
 
     public min(minimum: number, message?: string) {
         return this.custom((model, pass) => {
-            pass.assert(model >= minimum, message === undefined ? `Number ${model} failed minimum check. (${minimum})` : message);
+            pass.assert(model >= minimum, message === undefined ? `Number ${model} failed minimum check. (Must be >= ${minimum})` : message);
             return model;
         }, "afterAll");
     }
 
     public max(maximum: number, message?: string) {
         return this.custom((model, pass) => {
-            pass.assert(model <= maximum, message === undefined ? `Number ${model} failed maximum check. (${maximum})` : message);
+            pass.assert(model <= maximum, message === undefined ? `Number ${model} failed maximum check. (Must be <= ${maximum})` : message);
             return model;
         }, "afterAll");
     }

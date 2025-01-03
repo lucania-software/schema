@@ -1,10 +1,12 @@
-import type { ValidationError } from "../error/ValidationError";
+import { TopLevelValidationError } from "../error/TopLevelValidationError";
+import { ValidationError } from "../error/ValidationError";
 import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchemaAny } from "../typing/extended";
 import type {
     AdditionalValidationPasses, AdditionalValidator, AdditionalValidatorAfterType,
     AdditionalValidatorBeforeType, AdditionalValidatorType, DefaultValue,
-    EnsureValidator, ModelValue, SourceValue
+    EnsureValidator, ModelValue, OptionalValidationOptions, SourceValue,
+    ValidationOptions
 } from "../typing/toolbox";
 
 export abstract class BaseSchema<Source, Model, Required extends boolean, Default extends DefaultValue<Source>> {
@@ -29,38 +31,54 @@ export abstract class BaseSchema<Source, Model, Required extends boolean, Defaul
 
     public abstract get type(): string;
 
-    public validate(source: SourceValue<Source, Required, Default>, pass?: ValidationPass): ModelValue<Source, Model, Required, Default> {
+    public validate(source: SourceValue<Source, Required, Default>, options?: OptionalValidationOptions, pass?: ValidationPass): ModelValue<Source, Model, Required, Default> {
         pass = this._ensurePass(source, pass);
         let result: any = source;
-        result = this._executeAdditionalValidator(result, pass, "beforeAll");
-        result = this._executeAdditionalValidator(result, pass, "beforeDefault");
-        if (!BaseSchema.isPresent(result) && this.hasDefault()) {
-            result = this.getDefault(pass);
-        }
-        result = this._executeAdditionalValidator(result, pass, "afterDefault");
-        result = this._executeAdditionalValidator(result, pass, "beforeConversion");
-        if (BaseSchema.isPresent(result)) {
-            if (BaseSchema.getType(result) !== this.type) {
-                result = this.convert(result, pass);
+        const presentOptions: ValidationOptions = {
+            collectErrors: options?.collectErrors || false
+        };
+        try {
+            result = this._executeAdditionalValidator(result, pass, "beforeAll");
+            result = this._executeAdditionalValidator(result, pass, "beforeDefault");
+            if (!BaseSchema.isPresent(result) && this.hasDefault()) {
+                result = this.getDefault(pass);
             }
-            result = this._validate(result, pass);
-            result = this._executeAdditionalValidator(result, pass, "afterConversion");
-        } else {
-            if (this._required) {
-                throw pass.getError(pass.path.length > 0 ? `Missing required value at "${pass.path.join(".")}".` : "Missing required value.");
+            result = this._executeAdditionalValidator(result, pass, "afterDefault");
+            result = this._executeAdditionalValidator(result, pass, "beforeConversion");
+            if (BaseSchema.isPresent(result)) {
+                if (BaseSchema.getType(result) !== this.type) {
+                    result = this.convert(result, pass);
+                }
+                result = this._validate(result, presentOptions, pass);
+                result = this._executeAdditionalValidator(result, pass, "afterConversion");
             } else {
-                result = undefined;
+                if (this._required) {
+                    throw pass.causeError(pass.path.length > 0 ? `Missing required value at "${pass.path.join(".")}".` : "Missing required value.");
+                } else {
+                    result = undefined;
+                }
             }
-            result = this._validate(result, pass);
-            result = this._executeAdditionalValidator(result, pass, "afterConversion");
+            if (this._required || result !== undefined) {
+                result = this._executeAdditionalValidator(result, pass, "afterAll");
+            }
+        } catch (error) {
+            if (error instanceof ValidationError && presentOptions.collectErrors) {
+                result = undefined;
+            } else {
+                throw error;
+            }
         }
-        if (this._required || result !== undefined) {
-            result = this._executeAdditionalValidator(result, pass, "afterAll");
+        if (pass.topLevel && pass.errors.length > 0) {
+            throw new TopLevelValidationError(pass);
         }
         return result;
     }
 
-    protected abstract _validate(source: ModelValue<Source, Model, Required, Default>, pass: ValidationPass): ModelValue<Source, Model, Required, Default>;
+    protected abstract _validate(
+        source: ModelValue<Source, Model, Required, Default>,
+        options: ValidationOptions,
+        pass: ValidationPass
+    ): ModelValue<Source, Model, Required, Default>;
 
     public abstract convert(value: Source, pass: ValidationPass): Model;
 
@@ -107,7 +125,7 @@ export abstract class BaseSchema<Source, Model, Required extends boolean, Defaul
         } else if (this.hasDefault()) {
             return this._default as Source;
         } else {
-            throw pass.getError(`Failed to get default. Invalid default value.`);
+            throw pass.causeError(`Failed to get default. Invalid default value.`);
         }
     }
 
@@ -124,7 +142,7 @@ export abstract class BaseSchema<Source, Model, Required extends boolean, Defaul
     }
 
     protected _getJsonSchemaDescription() {
-        const pass = new ValidationPass(this, this._default);
+        const pass = new ValidationPass(this, this._default, undefined);
         const descriptionPieces: string[] = [];
         descriptionPieces.push(`A ${this._required ? "required" : "optional"} ${this.type}`);
         if (this.hasDefault()) {
@@ -147,7 +165,7 @@ export abstract class BaseSchema<Source, Model, Required extends boolean, Defaul
 
     protected _ensurePass(source: SourceValue<Source, Required, Default>, pass?: ValidationPass) {
         if (pass === undefined) {
-            pass = new ValidationPass(this, source);
+            pass = new ValidationPass(this, source, undefined);
         }
         return pass;
     }

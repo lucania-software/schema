@@ -1,6 +1,7 @@
+import { ValidationError } from "../error/ValidationError";
 import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchemaAny } from "../typing/extended";
-import type { AdditionalValidationPasses, DefaultValue, Merge, ModelRequirement, ModelValue, SourceRequirement, SourceValue } from "../typing/toolbox";
+import type { AdditionalValidationPasses, DefaultValue, Merge, ModelRequirement, ModelValue, SourceRequirement, SourceValue, ValidationOptions } from "../typing/toolbox";
 import { BaseSchema } from "./BaseSchema";
 
 export type ObjectSubschema = { [Key: string]: BaseSchemaAny };
@@ -58,7 +59,7 @@ export class ObjectSchema<Subschema extends ObjectSubschema, Required extends bo
 
     public get type() { return "object"; }
 
-    protected _validate(source: ModelValue<ObjectSource<Subschema>, ObjectModel<Subschema>, Required, Default>, pass: ValidationPass):
+    protected _validate(source: ModelValue<ObjectSource<Subschema>, ObjectModel<Subschema>, Required, Default>, options: ValidationOptions, pass: ValidationPass):
         ModelValue<ObjectSource<Subschema>, ObjectModel<Subschema>, Required, Default> {
         const input: any = source;
         let output: any = input;
@@ -67,7 +68,7 @@ export class ObjectSchema<Subschema extends ObjectSubschema, Required extends bo
             for (const key in this.subschema) {
                 const nestedSchema = this.subschema[key];
                 const nestedValue = input[key];
-                output[key] = this.subschema[key].validate(input[key], pass.next([...pass.path, key], nestedSchema, nestedValue));
+                output[key] = this.subschema[key].validate(input[key], options, pass.next([...pass.path, key], nestedSchema, nestedValue));
             }
         }
         return output;

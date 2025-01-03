@@ -1,6 +1,6 @@
 import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchemaAny } from "../typing/extended";
-import { AdditionalValidationPasses, DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
+import { AdditionalValidationPasses, DefaultValue, ModelValue, SourceValue, ValidationOptions } from "../typing/toolbox";
 import { BaseSchema } from "./BaseSchema";
 
 export type OrSetSchemaSource<MemberSchema extends BaseSchemaAny> = (
@@ -39,6 +39,7 @@ export class OrSetSchema<
 
     protected _validate(
         source: ModelValue<OrSetSchemaSource<MemberSchema>, OrSetSchemaModel<MemberSchema>, Required, Default>,
+        options: ValidationOptions,
         pass: ValidationPass
     ): ModelValue<OrSetSchemaSource<MemberSchema>, OrSetSchemaModel<MemberSchema>, Required, Default> {
         let result = source;
@@ -49,7 +50,7 @@ export class OrSetSchema<
                 const schema = this.schemas[i];
                 try {
                     if (BaseSchema.getType(result) === schema.type) {
-                        result = schema.validate(result, pass);
+                        result = schema.validate(result, options, pass);
                         done = true;
                     }
                 } catch (error) {

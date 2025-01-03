@@ -1,5 +1,5 @@
 import { ValidationPass } from "../error/ValidationPass";
-import { DefaultValue, ModelValue, SourceValue } from "../typing/toolbox";
+import { DefaultValue, ModelValue, SourceValue, ValidationOptions } from "../typing/toolbox";
 import { BaseSchema } from "./BaseSchema";
 
 export type BooleanSource = boolean | number | string | null | undefined;
@@ -8,7 +8,7 @@ export class BooleanSchema<Required extends boolean, Default extends DefaultValu
 
     public get type() { return "boolean"; }
 
-    protected _validate(source: ModelValue<BooleanSource, boolean, Required, Default>, pass: ValidationPass):
+    protected _validate(source: ModelValue<BooleanSource, boolean, Required, Default>, options: ValidationOptions, pass: ValidationPass):
         ModelValue<BooleanSource, boolean, Required, Default> {
         return source;
     }
@@ -25,7 +25,7 @@ export class BooleanSchema<Required extends boolean, Default extends DefaultValu
         } else if (value === undefined || value === null) {
             return false;
         } else {
-            throw pass.getError(`Unable to convert ${BaseSchema.getType(value)} to boolean.`);
+            throw pass.causeError(`Unable to convert ${BaseSchema.getType(value)} to boolean.`);
         }
     }
 

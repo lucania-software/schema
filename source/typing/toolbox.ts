@@ -2,6 +2,12 @@ import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchema } from "../schema/BaseSchema";
 import { BaseSchemaAny } from "./extended";
 
+export type ValidationOptions = {
+    collectErrors: boolean;
+};
+
+export type OptionalValidationOptions = Partial<ValidationOptions>;
+
 export type SourceRequirement<Layout extends BaseSchemaAny> = (
     Layout extends BaseSchema<any, any, infer Required, infer Default> ? (
         Required extends true ? (

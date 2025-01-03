@@ -1,5 +1,5 @@
 import { ValidationPass } from "../error/ValidationPass";
-import { AdditionalValidationPasses, DefaultValue, ModelValue } from "../typing/toolbox";
+import { AdditionalValidationPasses, DefaultValue, ModelValue, ValidationOptions } from "../typing/toolbox";
 import { BaseSchema } from "./BaseSchema";
 
 export class EnumerationSchema<Members extends string, Required extends boolean, Default extends DefaultValue<Members>>
@@ -19,12 +19,10 @@ export class EnumerationSchema<Members extends string, Required extends boolean,
 
     public get type() { return "string"; }
 
-    protected _validate(source: ModelValue<Members, Members, Required, Default>, pass: ValidationPass):
+    protected _validate(source: ModelValue<Members, Members, Required, Default>, options: ValidationOptions, pass: ValidationPass):
         ModelValue<Members, Members, Required, Default> {
         const result: any = source;
-        if (this._required) {
-            pass.assert(this.members.includes(result), `"${result}" is not a valid enumeration value (Expected: ${this.members.join(", ")}).`);
-        }
+        pass.assert(this.members.includes(result), `"${result}" is not a valid enumeration value (Expected: ${this.members.join(", ")}).`);
         return result;
     }
 
