@@ -1,3 +1,4 @@
+import { ValidationError } from "../error/ValidationError";
 import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchemaAny } from "../typing/extended";
 import { AdditionalValidationPasses, DefaultValue, ModelValue, SourceValue, ValidationOptions } from "../typing/toolbox";
@@ -42,35 +43,53 @@ export class OrSetSchema<
         options: ValidationOptions,
         pass: ValidationPass
     ): ModelValue<OrSetSchemaSource<MemberSchema>, OrSetSchemaModel<MemberSchema>, Required, Default> {
-        let result = source;
-        if (result !== undefined) {
-            let done = false;
-            const failureMessages: string[] = [];
-            for (let i = 0; i < this.schemas.length && !done; i++) {
-                const schema = this.schemas[i];
-                try {
-                    if (BaseSchema.getType(result) === schema.type) {
-                        result = schema.validate(result, options, pass);
-                        done = true;
-                    }
-                } catch (error) {
-                    if (error instanceof Error) {
-                        failureMessages.push(`Schema #${i + 1}: ${error.message}`);
-                    } else {
-                        failureMessages.push(`Schema #${i + 1}: ${String(error)}`);
-                    }
+        const errors: Record<number, Error | undefined> = {};
+        for (let i = 0; i < this.schemas.length; i++) {
+            const schema = this.schemas[i];
+            try {
+                if (BaseSchema.getType(source) !== schema.type) {
+                    throw new ValidationError(new ValidationPass(schema, source, undefined), `Conversions for schemas in an OrSet are disabled.`);
                 }
+                return schema.validate(source);
+            } catch (error) {
+                errors[i] = error as Error;
             }
-            if (!done) {
-                failureMessages.push(`Conversions for schemas in an OrSet are disabled.`);
-            }
-            pass.assert(
-                failureMessages.length === 0,
-                `Provided value (${BaseSchema.getType(result)}) matched no schemas ` +
-                `(${this.schemas.map((schema) => schema.type).join(", ")}).\n${failureMessages.join("\n")}`
-            );
         }
-        return result;
+        const errorMessages = Object.entries(errors).map(([index, error]) => `Schema #${parseInt(index) + 1}: ${error === undefined ? "Unknown error." : error.message}`);
+        throw pass.causeError(
+            `Provided value (${BaseSchema.getType(source)}) matched no schemas ` +
+            `(${this.schemas.map((schema) => schema.type).join(", ")}).\n` +
+            `${errorMessages.join("\n")}`
+        );
+        // let result = source;
+        // if (result !== undefined) {
+        //     let done = false;
+        //     const failureMessages: string[] = [];
+        //     for (let i = 0; i < this.schemas.length && !done; i++) {
+        //         const schema = this.schemas[i];
+        //         try {
+        //             if (BaseSchema.getType(result) === schema.type) {
+        //                 result = schema.validate(result, options, pass);
+        //                 done = true;
+        //             }
+        //         } catch (error) {
+        //             if (error instanceof Error) {
+        //                 failureMessages.push(`Schema #${i + 1}: ${error.message}`);
+        //             } else {
+        //                 failureMessages.push(`Schema #${i + 1}: ${String(error)}`);
+        //             }
+        //         }
+        //     }
+        //     if (!done) {
+        //         failureMessages.push(`Conversions for schemas in an OrSet are disabled.`);
+        //     }
+        //     pass.assert(
+        //         failureMessages.length === 0,
+        //         `Provided value (${BaseSchema.getType(result)}) matched no schemas ` +
+        //         `(${this.schemas.map((schema) => schema.type).join(", ")}).\n${failureMessages.join("\n")}`
+        //     );
+        // }
+        // return result;
     }
 
     public convert(value: OrSetSchemaSource<MemberSchema>, pass: ValidationPass): OrSetSchemaModel<MemberSchema> {
