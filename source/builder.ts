@@ -1,19 +1,31 @@
-import { BaseSchemaAny } from "./typing/extended";
-import { DefaultValue, ModelValue } from "./typing/toolbox";
+import { BaseSchema, SourceValue } from ".";
 import { AnySchema } from "./schema/AnySchema";
 import { ArraySchema, ArraySource } from "./schema/ArraySchema";
 import { BooleanSchema, BooleanSource } from "./schema/BooleanSchema";
+import { ConstantSchema, ConstantSource } from "./schema/ConstantSchema";
 import { DateSchema, DateSource } from "./schema/DateSchema";
 import { DynamicObjectSchema, DynamicObjectSource } from "./schema/DynamicObjectSchema";
 import { EnumerationSchema } from "./schema/EnumerationSchema";
+import { LenientObjectModel, LenientObjectSchema, LenientObjectSource, LenientObjectSubschema } from "./schema/LenientObject";
 import { NumberSchema, NumberSource } from "./schema/NumberSchema";
-import { ObjectModel, ObjectSchema, ObjectSource, ObjectSubschema } from "./schema/ObjectSchema";
+import { ObjectSchema, ObjectSource, ObjectSubschema } from "./schema/ObjectSchema";
 import { OrSetSchema, OrSetSchemaSource } from "./schema/OrSetSchema";
 import { StringSchema, StringSource } from "./schema/StringSchema";
-import { BaseSchema, SourceValue } from ".";
+import { BaseSchemaAny } from "./typing/extended";
+import { DefaultValue, ModelValue } from "./typing/toolbox";
 
+/**
+ * A collection of helper functions used to create the standard set of schemas.
+ */
 export namespace Schema {
 
+    /**
+    * Creates a schema used to validate a string.
+    * 
+    * @param required Flag representing whether the schema should enforce a value's presence.
+    * @param defaultValue A default the schema will use during validation if a value is not present.
+    * @returns A schema used to validate a string.
+    */
     export function String(): StringSchema<true, undefined>;
     export function String<Required extends boolean>(required: Required): StringSchema<Required, undefined>;
     export function String<Required extends boolean, Default extends DefaultValue<StringSource>>
@@ -22,6 +34,13 @@ export namespace Schema {
         return new StringSchema(required, defaultValue);
     }
 
+    /**
+    * Creates a schema used to validate a number.
+    * 
+    * @param required Flag representing whether the schema should enforce a value's presence.
+    * @param defaultValue A default the schema will use during validation if a value is not present.
+    * @returns A schema used to validate a number.
+    */
     export function Number(): NumberSchema<true, undefined>;
     export function Number<Required extends boolean>(required: Required): NumberSchema<Required, undefined>;
     export function Number<Required extends boolean, Default extends DefaultValue<NumberSource>>
@@ -30,6 +49,13 @@ export namespace Schema {
         return new NumberSchema(required, defaultValue);
     }
 
+    /**
+    * Creates a schema used to validate a boolean.
+    * 
+    * @param required Flag representing whether the schema should enforce a value's presence.
+    * @param defaultValue A default the schema will use during validation if a value is not present.
+    * @returns A schema used to validate a boolean.
+    */
     export function Boolean(): BooleanSchema<true, undefined>;
     export function Boolean<Required extends boolean>(required: Required): BooleanSchema<Required, undefined>;
     export function Boolean<Required extends boolean, Default extends DefaultValue<BooleanSource>>
@@ -38,6 +64,13 @@ export namespace Schema {
         return new BooleanSchema(required, defaultValue);
     }
 
+    /**
+    * Creates a schema used to validate a Date.
+    * 
+    * @param required Flag representing whether the schema should enforce a value's presence.
+    * @param defaultValue A default the schema will use during validation if a value is not present.
+    * @returns A schema used to validate a Date.
+    */
     export function Date(): DateSchema<true, undefined>;
     export function Date<Required extends boolean>(required: Required): DateSchema<Required, undefined>;
     export function Date<Required extends boolean, Default extends DefaultValue<DateSource>>
@@ -46,6 +79,13 @@ export namespace Schema {
         return new DateSchema(required, defaultValue);
     }
 
+    /**
+    * Creates a schema used to validate anything! Any value will pass the validation provided by schemas created by this function.
+    * 
+    * @param required Flag representing whether the schema should enforce a value's presence.
+    * @param defaultValue A default the schema will use during validation if a value is not present.
+    * @returns A schema used to validate anything.
+    */
     export function Any(): AnySchema<true, undefined>;
     export function Any<Required extends boolean>(required: Required): AnySchema<Required, undefined>;
     export function Any<Required extends boolean, Default extends DefaultValue<any>>
@@ -54,6 +94,27 @@ export namespace Schema {
         return new AnySchema(required, defaultValue);
     }
 
+    /**
+    * Creates a schema used to validate an object.
+    * 
+    * This function can be used to create schemas that describe a value's object hierarchy.
+    *  
+    * @note Values validated by schemas created by this function will only retain properties specified by the schema.
+    * 
+    * @example
+    * ```ts
+    * $.Object({ name: $.String() }).validate({ name: "Jeremy", age: 1 })
+    * ```
+    * ->
+    * ```ts
+    * { "name": "Jeremy" }
+    * ```
+    * 
+    * @param subschema An object describing the sole keys and values that must be present within an object.
+    * @param required Flag representing whether the schema should enforce a value's presence.
+    * @param defaultValue A default the schema will use during validation if a value is not present.
+    * @returns A schema used to validate an object.
+    */
     export function Object<Subschema extends ObjectSubschema>(subschema: Subschema): ObjectSchema<Subschema, true, undefined>;
     export function Object<Subschema extends ObjectSubschema, Required extends boolean>
         (subschema: Subschema, required: Required): ObjectSchema<Subschema, Required, undefined>;
@@ -63,6 +124,73 @@ export namespace Schema {
         [Key: string]: BaseSchemaAny
     }, required: boolean = true, defaultValue: any = undefined) {
         return new ObjectSchema(subschema, required, defaultValue);
+    }
+
+    /**
+    * Creates a schema used to validate an object.
+    * 
+    * This function can be used to create schemas that describe a value's object hierarchy.
+    *  
+    * @note This function creates schemas that differ from that of `$.Object` in that the values validated by schemas created by this function
+    * will RETAIN the properties not specified by the schema.
+    * 
+    * @example 
+    * ```ts
+    * $.LenientObject({ name: $.String() }).validate({ name: "Jeremy", age: 1 })
+    * ```
+    * ->
+    * ```ts
+    * { "name": "Jeremy", "age": 1 }
+    * ```
+    * 
+    * @param subschema An object describing keys and values that must be present amongst any other keys and values within an object.
+    * @param required Flag representing whether the schema should enforce a value's presence.
+    * @param defaultValue A default the schema will use during validation if a value is not present.
+    * @returns A schema used to validate an object.
+    */
+    export function LenientObject<Subschema extends LenientObjectSubschema>
+        (subschema: Subschema): LenientObjectSchema<Subschema, LenientObjectSource<Subschema>, LenientObjectModel<Subschema>, true, undefined>;
+    export function LenientObject<Subschema extends LenientObjectSubschema, Required extends boolean>
+        (subschema: Subschema, required: Required): LenientObjectSchema<Subschema, LenientObjectSource<Subschema>, LenientObjectModel<Subschema>, Required, undefined>;
+    export function LenientObject<Subschema extends LenientObjectSubschema, Required extends boolean, Default extends DefaultValue<LenientObjectSource<Subschema>>>
+        (subschema: Subschema, required: Required, defaultValue: Default):
+        LenientObjectSchema<Subschema, LenientObjectSource<Subschema>, LenientObjectModel<Subschema>, Required, Default>;
+    export function LenientObject(subschema: {
+        [Key: string]: BaseSchemaAny
+    }, required: boolean = true, defaultValue: any = undefined) {
+        return new LenientObjectSchema(subschema, required, defaultValue);
+    }
+
+    /**
+    * Creates a schema used to validate an object.
+    * 
+    * This function can be used to create schemas that describe a value's object hierarchy.
+    *  
+    * @note This function creates schemas that differ from that of `$.Object` in that schemas created by this function can have ANY string keys
+    * and only their values will be validated against the supplied `subschema`.
+    * 
+    * @example 
+    * ```ts
+    * $.DynamicObject($.String()).validate({ name: "Jeremy", age: 1, randomKey: true })
+    * ```
+    * ->
+    * ```ts
+    * { "name": "Jeremy", "age": "1", "randomKey": "true" }
+    * ```
+    * 
+    * @param subschema Schema used to validate values within an object with dynamic keys.
+    * @param required Flag representing whether the schema should enforce a value's presence.
+    * @param defaultValue A default the schema will use during validation if a value is not present.
+    * @returns A schema used to validate an object.
+    */
+    export function DynamicObject<Subschema extends BaseSchemaAny>(subschema: Subschema): DynamicObjectSchema<Subschema, true, undefined>;
+    export function DynamicObject<Subschema extends BaseSchemaAny, Required extends boolean>
+        (subschema: Subschema, required: Required): DynamicObjectSchema<Subschema, Required, undefined>;
+    export function DynamicObject
+        <Subschema extends BaseSchemaAny, Required extends boolean, Default extends DefaultValue<DynamicObjectSource<Subschema>>>
+        (subschema: Subschema, required: Required, defaultValue: Default): DynamicObjectSchema<Subschema, Required, Default>;
+    export function DynamicObject(subschema: BaseSchemaAny, required: boolean = true, defaultValue: any = undefined) {
+        return new DynamicObjectSchema(subschema, required, defaultValue);
     }
 
     export function Array<Subschema extends BaseSchemaAny>(subschema: Subschema): ArraySchema<Subschema, true, undefined>;
@@ -83,16 +211,6 @@ export namespace Schema {
         return new EnumerationSchema(members.$members, required, defaultValue);
     }
 
-    export function DynamicObject<Subschema extends BaseSchemaAny>(subschema: Subschema): DynamicObjectSchema<Subschema, true, undefined>;
-    export function DynamicObject<Subschema extends BaseSchemaAny, Required extends boolean>
-        (subschema: Subschema, required: Required): DynamicObjectSchema<Subschema, Required, undefined>;
-    export function DynamicObject
-        <Subschema extends BaseSchemaAny, Required extends boolean, Default extends DefaultValue<DynamicObjectSource<Subschema>>>
-        (subschema: Subschema, required: Required, defaultValue: Default): DynamicObjectSchema<Subschema, Required, Default>;
-    export function DynamicObject(subschema: BaseSchemaAny, required: boolean = true, defaultValue: any = undefined) {
-        return new DynamicObjectSchema(subschema, required, defaultValue);
-    }
-
     export function OrSet<MemberSchema extends BaseSchemaAny>
         (subschema: TypedMembers<MemberSchema>):
         OrSetSchema<MemberSchema, true, undefined>;
@@ -105,6 +223,16 @@ export namespace Schema {
         OrSetSchema<MemberSchema, Required, Default>;
     export function OrSet(members: TypedMembers<BaseSchemaAny>, required: boolean = true, defaultValue: any = undefined) {
         return new OrSetSchema(members.$members, required, defaultValue);
+    }
+
+    export function Constant<Constant extends ConstantSource>(constant: Constant): ConstantSchema<Constant, true, undefined>;
+    export function Constant<Constant extends ConstantSource, Required extends boolean>(constant: Constant, required: Required):
+        ConstantSchema<Constant, Required, undefined>;
+    export function Constant<Constant extends ConstantSource, Required extends boolean, Default extends DefaultValue<Constant>>
+        (constant: Constant, required: Required, defaultValue: Default):
+        ConstantSchema<Constant, Required, Default>;
+    export function Constant(value: ConstantSource, required: boolean = true, defaultValue: any = undefined) {
+        return new ConstantSchema(value, required, defaultValue);
     }
 
     export type TypedMembers<Member extends any> = { $members: Member[] };
