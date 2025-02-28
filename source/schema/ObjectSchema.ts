@@ -85,23 +85,6 @@ export class ObjectSchema<Subschema extends ObjectSubschema, Required extends bo
         return model;
     }
 
-    public extend<ExtensionSubschema extends ObjectSubschema, ExtensionDefault extends DefaultValue<ObjectSource<ExtensionSubschema>>>
-        (schema: ObjectSchema<ExtensionSubschema, Required, ExtensionDefault>) {
-        let defaultValue: any = undefined;
-        if (this.hasDefault() !== schema.hasDefault()) {
-            throw new Error("Both or neither default values must be specified in order to extend a schema!");
-        }
-        if (this.hasDefault() && schema.hasDefault()) {
-            defaultValue = (pass: ValidationPass) => {
-                return {
-                    ...this.getDefault(pass),
-                    ...schema.getDefault(pass)
-                };
-            };
-        }
-        return new ObjectSchema({ ...this.subschema, ...schema.subschema }, this._required, defaultValue);
-    }
-
     public getJsonSchema(): object {
         const properties: Record<string, object> = {};
         for (const key in this.subschema) {
