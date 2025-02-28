@@ -5,7 +5,8 @@ import { BaseSchemaAny } from "../typing/extended";
 import type {
     AdditionalValidationPasses, AdditionalValidator, AdditionalValidatorAfterType,
     AdditionalValidatorBeforeType, AdditionalValidatorType, DefaultValue,
-    EnsureValidator, ModelValue, OptionalValidationOptions, SourceValue,
+    EnsureValidator,
+    ModelValue, OptionalValidationOptions, SourceValue,
     ValidationOptions
 } from "../typing/toolbox";
 
@@ -39,26 +40,35 @@ export abstract class BaseSchema<Source, Model, Required extends boolean, Defaul
         };
         try {
             result = this._executeAdditionalValidator(result, pass, "beforeAll");
+
+            // Handle Default
             result = this._executeAdditionalValidator(result, pass, "beforeDefault");
             if (!BaseSchema.isPresent(result) && this.hasDefault()) {
                 result = this.getDefault(pass);
             }
             result = this._executeAdditionalValidator(result, pass, "afterDefault");
-            result = this._executeAdditionalValidator(result, pass, "beforeConversion");
-            if (BaseSchema.isPresent(result)) {
-                if (BaseSchema.getType(result) !== this.type) {
-                    result = this.convert(result, pass);
-                }
-                result = this._validate(result, presentOptions, pass);
-                result = this._executeAdditionalValidator(result, pass, "afterConversion");
-            } else {
-                if (this._required) {
-                    throw pass.causeError(pass.path.length > 0 ? `Missing required value at "${pass.path.join(".")}".` : "Missing required value.");
+
+            // Handle Required
+            if (!BaseSchema.isPresent(result)) {
+                if (this.isRequired()) {
+                    throw pass.causeError(pass.path.length > 0 ? `Missing required ${this.type} at path "${pass.path.join(".")}".` : `Missing required ${this.type}.`);
                 } else {
                     result = undefined;
                 }
             }
-            if (this._required || result !== undefined) {
+
+            // Handle Conversion
+            if (result !== undefined) {
+                result = this._executeAdditionalValidator(result, pass, "beforeConversion");
+                if (BaseSchema.getType(result) !== this.type) {
+                    result = this.convert(result, pass);
+                }
+                result = this._executeAdditionalValidator(result, pass, "afterConversion");
+            }
+
+            // Handle Validation
+            if (this.isRequired() || result !== undefined) {
+                result = this._validate(result, presentOptions, pass);
                 result = this._executeAdditionalValidator(result, pass, "afterAll");
             }
         } catch (error) {
@@ -74,6 +84,17 @@ export abstract class BaseSchema<Source, Model, Required extends boolean, Defaul
         return result;
     }
 
+    /**
+     * Responsible for validating that a supplied source matches the schema this class represents.
+     * 
+     * Some assumptions can be made about `source`:
+     *  * It will never be `null`/`undefined`.
+     *  * Its type returned by `BaseSchema.getType` will match that of this classes `type` property.
+     * 
+     * @param source Source to be validated.
+     * @param options Validation options.
+     * @param pass Validation pass.
+     */
     protected abstract _validate(
         source: ModelValue<Source, Model, Required, Default>,
         options: ValidationOptions,
@@ -201,12 +222,12 @@ export abstract class BaseSchema<Source, Model, Required extends boolean, Defaul
     }
 
     /**
-     * Checks to see if a value is present. (Not null or undefined)
+     * Checks to see if a value is present. (Not undefined)
      * @param value The value to check the presence of.
-     * @returns true if value is not null or undefined, false otherwise.
+     * @returns true if value is undefined, false otherwise.
      */
-    public static isPresent(value: any): value is Exclude<Exclude<any, null>, undefined> {
-        return value !== undefined && value !== null;
+    public static isPresent(value: any): value is Exclude<any, undefined> {
+        return value !== undefined;
     }
 
     public static getType(value: any) {
