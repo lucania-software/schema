@@ -5,9 +5,11 @@ export * from "./schema/AnySchema";
 export * from "./schema/ArraySchema";
 export * from "./schema/BaseSchema";
 export * from "./schema/BooleanSchema";
+export * from "./schema/ConstantSchema";
 export * from "./schema/DateSchema";
 export * from "./schema/DynamicObjectSchema";
 export * from "./schema/EnumerationSchema";
+export * from "./schema/LenientObject";
 export * from "./schema/NumberSchema";
 export * from "./schema/ObjectSchema";
 export * from "./schema/OrSetSchema";
@@ -16,3 +18,4 @@ export * from "./typing/extended";
 export * from "./typing/toolbox";
 
 export { Schema as $ } from "./builder";
+
