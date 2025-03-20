@@ -2,9 +2,11 @@ import { ValidationPass } from "../error/ValidationPass";
 import { BaseSchemaAny } from "../typing/extended";
 import type { AdditionalValidationPasses, DefaultValue, ModelValue, SourceValue, ValidationOptions } from "../typing/toolbox";
 import { BaseSchema } from "./BaseSchema";
+import { NumberSchema } from "./NumberSchema";
 
 export type ArraySource<Subschema extends BaseSchemaAny> = (
     Subschema extends BaseSchema<infer Source, any, infer Required, infer Default> ? (
+        Record<number, SourceValue<Source, Required, Default>> |
         SourceValue<Source, Required, Default>[]
     ) : never
 );
@@ -49,6 +51,17 @@ export class ArraySchema<Subschema extends BaseSchemaAny, Required extends boole
             return value as any;
         } else if (typeof value === "string") {
             return [value] as any;
+        } else if (typeof value === "object") {
+            return Object.entries(value).reduce<ArrayModel<Subschema>>((array, [key, item]) => {
+                const index = parseInt(key);
+                pass.assert(
+                    !isNaN(index),
+                    `Unable to convert ${BaseSchema.getType(value)} to array. ` +
+                    `Encountered key that is not a valid array index: "${key}"`
+                );
+                array[index] = item;
+                return array;
+            }, [] as any);
         } else {
             throw pass.causeError(`Unable to convert ${BaseSchema.getType(value)} to array.`);
         }
