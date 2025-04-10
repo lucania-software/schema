@@ -35,7 +35,7 @@ export class OrSetSchema<
     }
 
     public get type() {
-        return "string";
+        return "OrSet";
     }
 
     protected _validate(
