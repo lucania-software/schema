@@ -14,6 +14,8 @@ export * from "./schema/NumberSchema";
 export * from "./schema/ObjectSchema";
 export * from "./schema/OrSetSchema";
 export * from "./schema/StringSchema";
+export * from "./schema/TupleSchema";
 export * from "./typing/extended";
 export * from "./typing/toolbox";
+
 export { Schema as $ } from "./builder";
