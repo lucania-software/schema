@@ -1,8 +1,28 @@
+import { AnySchema } from "../schema/AnySchema";
+import { ArraySchema } from "../schema/ArraySchema";
 import { BaseSchema } from "../schema/BaseSchema";
+import { BooleanSchema } from "../schema/BooleanSchema";
+import { ConstantSchema } from "../schema/ConstantSchema";
+import { DateSchema } from "../schema/DateSchema";
+import { DynamicObjectSchema } from "../schema/DynamicObjectSchema";
 import { EnumerationSchema } from "../schema/EnumerationSchema";
+import { NumberSchema } from "../schema/NumberSchema";
 import { ObjectSchema } from "../schema/ObjectSchema";
+import { OrSetSchema } from "../schema/OrSetSchema";
+import { StringSchema } from "../schema/StringSchema";
+import { TupleSchema } from "../schema/TupleSchema";
 import { DefaultValue } from "./toolbox";
 
 export type BaseSchemaAny = BaseSchema<any, any, boolean, DefaultValue<any>>;
 export type ObjectSchemaAny = ObjectSchema<any, boolean, DefaultValue<any>>;
 export type EnumerationSchemaAny = EnumerationSchema<string[], boolean, DefaultValue<any>>;
+export type TupleSchemaAny = TupleSchema<any[], boolean, DefaultValue<any>>;
+export type NumberSchemaAny = NumberSchema<boolean, DefaultValue<any>>;
+export type StringSchemaAny = StringSchema<boolean, DefaultValue<any>>;
+export type DynamicObjectSchemaAny = DynamicObjectSchema<any, boolean, DefaultValue<any>>;
+export type ConstantSchemaAny = ConstantSchema<any, boolean, DefaultValue<any>>;
+export type DateSchemaAny = DateSchema<boolean, DefaultValue<any>>;
+export type AnySchemaAny = AnySchema<boolean, DefaultValue<any>>;
+export type OrSetSchemaAny = OrSetSchema<any, boolean, DefaultValue<any>>;
+export type ArraySchemaAny = ArraySchema<any, boolean, DefaultValue<any>>;
+export type BooleanSchemaAny = BooleanSchema<boolean, DefaultValue<any>>;
