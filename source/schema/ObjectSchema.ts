@@ -75,7 +75,7 @@ export class ObjectSchema<Subschema extends ObjectSubschema, Required extends bo
     }
 
     public convert(value: ObjectSource<Subschema>, pass: ValidationPass): ObjectModel<Subschema> {
-        pass.assert(typeof value === "object", `Unable to convert ${ObjectSchema.getType(value)} to object.`);
+        pass.assert(typeof value === "object" && value !== null, `Unable to convert ${ObjectSchema.getType(value)} to object.`);
         const model: any = {};
         for (const key in this.subschema) {
             const nestedSchema = this.subschema[key];

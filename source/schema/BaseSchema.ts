@@ -236,6 +236,9 @@ export abstract class BaseSchema<Source, Model, Required extends boolean, Defaul
         }
         const type = typeof value;
         if (type === "object") {
+            if (value.constructor === undefined) {
+                return type;
+            }
             const constructor = value.constructor.name;
             if (constructor === "Object") {
                 return type;
