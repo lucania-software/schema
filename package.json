@@ -9,7 +9,7 @@
     ],
     "scripts": {
         "setup": "npm install",
-        "clean": "erase /F /S /Q build",
+        "clean": "rm -rf build",
         "build": "npx rollup --bundleConfigAsCjs --config rollup.config.js",
         "build:clean": "npm run clean && npm run build",
         "build:watch": "npx rollup --watch --bundleConfigAsCjs --config rollup.config.js",
