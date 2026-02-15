@@ -44,7 +44,7 @@ export type ModelValue<Source, Model, Required extends boolean, Default extends 
     Model
 );
 
-export type DefaultValue<Type> = undefined | Type | ((pass: ValidationPass) => Type);
+export type DefaultValue<Source> = undefined | Source | ((pass: ValidationPass) => Source);
 
 export type AdditionalValidatorBeforeType = (
     "beforeAll" |

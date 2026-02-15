@@ -11,6 +11,7 @@ import { NumberSchema, NumberSource } from "./schema/NumberSchema";
 import { ObjectSchema, ObjectSource, ObjectSubschema } from "./schema/ObjectSchema";
 import { OrSetSchema, OrSetSchemaSource } from "./schema/OrSetSchema";
 import { StringSchema, StringSource } from "./schema/StringSchema";
+import { TupleSchema, TupleSource } from "./schema/TupleSchema";
 import { BaseSchemaAny } from "./typing/extended";
 import { DefaultValue, ModelValue, SourceValue } from "./typing/toolbox";
 
@@ -27,9 +28,12 @@ export namespace Schema {
     * @returns A schema used to validate a string.
     */
     export function String(): StringSchema<true, undefined>;
+
     export function String<Required extends boolean>(required: Required): StringSchema<Required, undefined>;
+
     export function String<Required extends boolean, Default extends DefaultValue<StringSource>>
         (required: Required, defaultValue: Default): StringSchema<Required, Default>;
+
     export function String(required: boolean = true, defaultValue: any = undefined) {
         return new StringSchema(required, defaultValue);
     }
@@ -42,9 +46,12 @@ export namespace Schema {
     * @returns A schema used to validate a number.
     */
     export function Number(): NumberSchema<true, undefined>;
+
     export function Number<Required extends boolean>(required: Required): NumberSchema<Required, undefined>;
+
     export function Number<Required extends boolean, Default extends DefaultValue<NumberSource>>
         (required: Required, defaultValue: Default): NumberSchema<Required, Default>;
+
     export function Number(required: boolean = true, defaultValue: any = undefined) {
         return new NumberSchema(required, defaultValue);
     }
@@ -57,9 +64,12 @@ export namespace Schema {
     * @returns A schema used to validate a boolean.
     */
     export function Boolean(): BooleanSchema<true, undefined>;
+
     export function Boolean<Required extends boolean>(required: Required): BooleanSchema<Required, undefined>;
+
     export function Boolean<Required extends boolean, Default extends DefaultValue<BooleanSource>>
         (required: Required, defaultValue: Default): BooleanSchema<Required, Default>;
+
     export function Boolean(required: boolean = true, defaultValue: any = undefined) {
         return new BooleanSchema(required, defaultValue);
     }
@@ -72,9 +82,12 @@ export namespace Schema {
     * @returns A schema used to validate a Date.
     */
     export function Date(): DateSchema<true, undefined>;
+
     export function Date<Required extends boolean>(required: Required): DateSchema<Required, undefined>;
+
     export function Date<Required extends boolean, Default extends DefaultValue<DateSource>>
         (required: Required, defaultValue: Default): DateSchema<Required, Default>;
+
     export function Date(required: boolean = true, defaultValue: any = undefined) {
         return new DateSchema(required, defaultValue);
     }
@@ -87,9 +100,12 @@ export namespace Schema {
     * @returns A schema used to validate anything.
     */
     export function Any(): AnySchema<true, undefined>;
+
     export function Any<Required extends boolean>(required: Required): AnySchema<Required, undefined>;
+
     export function Any<Required extends boolean, Default extends DefaultValue<any>>
         (required: Required, defaultValue: Default): AnySchema<Required, Default>;
+
     export function Any(required: boolean = true, defaultValue: any = undefined) {
         return new AnySchema(required, defaultValue);
     }
@@ -116,10 +132,13 @@ export namespace Schema {
     * @returns A schema used to validate an object.
     */
     export function Object<Subschema extends ObjectSubschema>(subschema: Subschema): ObjectSchema<Subschema, true, undefined>;
+
     export function Object<Subschema extends ObjectSubschema, Required extends boolean>
         (subschema: Subschema, required: Required): ObjectSchema<Subschema, Required, undefined>;
+
     export function Object<Subschema extends ObjectSubschema, Required extends boolean, Default extends DefaultValue<ObjectSource<Subschema>>>
         (subschema: Subschema, required: Required, defaultValue: Default): ObjectSchema<Subschema, Required, Default>;
+
     export function Object(subschema: {
         [Key: string]: BaseSchemaAny
     }, required: boolean = true, defaultValue: any = undefined) {
@@ -150,11 +169,25 @@ export namespace Schema {
     */
     export function LenientObject<Subschema extends LenientObjectSubschema>
         (subschema: Subschema): LenientObjectSchema<Subschema, LenientObjectSource<Subschema>, LenientObjectModel<Subschema>, true, undefined>;
+
     export function LenientObject<Subschema extends LenientObjectSubschema, Required extends boolean>
-        (subschema: Subschema, required: Required): LenientObjectSchema<Subschema, LenientObjectSource<Subschema>, LenientObjectModel<Subschema>, Required, undefined>;
+        (subschema: Subschema, required: Required): LenientObjectSchema<
+            Subschema,
+            LenientObjectSource<Subschema>,
+            LenientObjectModel<Subschema>,
+            Required,
+            undefined
+        >;
+
     export function LenientObject<Subschema extends LenientObjectSubschema, Required extends boolean, Default extends DefaultValue<LenientObjectSource<Subschema>>>
-        (subschema: Subschema, required: Required, defaultValue: Default):
-        LenientObjectSchema<Subschema, LenientObjectSource<Subschema>, LenientObjectModel<Subschema>, Required, Default>;
+        (subschema: Subschema, required: Required, defaultValue: Default): LenientObjectSchema<
+            Subschema,
+            LenientObjectSource<Subschema>,
+            LenientObjectModel<Subschema>,
+            Required,
+            Default
+        >;
+
     export function LenientObject(subschema: {
         [Key: string]: BaseSchemaAny
     }, required: boolean = true, defaultValue: any = undefined) {
@@ -184,60 +217,88 @@ export namespace Schema {
     * @returns A schema used to validate an object.
     */
     export function DynamicObject<Subschema extends BaseSchemaAny>(subschema: Subschema): DynamicObjectSchema<Subschema, true, undefined>;
+
     export function DynamicObject<Subschema extends BaseSchemaAny, Required extends boolean>
         (subschema: Subschema, required: Required): DynamicObjectSchema<Subschema, Required, undefined>;
+
     export function DynamicObject
         <Subschema extends BaseSchemaAny, Required extends boolean, Default extends DefaultValue<DynamicObjectSource<Subschema>>>
         (subschema: Subschema, required: Required, defaultValue: Default): DynamicObjectSchema<Subschema, Required, Default>;
+
     export function DynamicObject(subschema: BaseSchemaAny, required: boolean = true, defaultValue: any = undefined) {
         return new DynamicObjectSchema(subschema, required, defaultValue);
     }
 
     export function Array<Subschema extends BaseSchemaAny>(subschema: Subschema): ArraySchema<Subschema, true, undefined>;
+
     export function Array<Subschema extends BaseSchemaAny, Required extends boolean>
         (subschema: Subschema, required: Required): ArraySchema<Subschema, Required, undefined>;
+
     export function Array<Subschema extends BaseSchemaAny, Required extends boolean, Default extends DefaultValue<ArraySource<Subschema>>>
         (subschema: Subschema, required: Required, defaultValue: Default): ArraySchema<Subschema, Required, Default>;
+
     export function Array(subschema: BaseSchemaAny, required: boolean = true, defaultValue: any = undefined) {
         return new ArraySchema(subschema, required, defaultValue);
     }
 
     export function Enumeration<Members extends string[]>
         (subschema: TypedMembers<Members>): EnumerationSchema<Members, true, undefined>;
+
     export function Enumeration<Members extends string[], Required extends boolean>
         (subschema: TypedMembers<Members>, required: Required): EnumerationSchema<Members, Required, undefined>;
+
     export function Enumeration<Members extends string[], Required extends boolean, Default extends DefaultValue<EnumerationSource<Members>>>
         (subschema: TypedMembers<Members>, required: Required, defaultValue: Default): EnumerationSchema<Members, Required, Default>;
+
     export function Enumeration({ $members }: TypedMembers<string[]>, required: boolean = true, defaultValue: any = undefined) {
         return new EnumerationSchema($members, required, defaultValue);
+    }
+
+    export function Tuple<Members extends BaseSchemaAny[]>(members: TypedMembers<Members>): TupleSchema<Members, true, undefined>;
+
+    export function Tuple<Members extends BaseSchemaAny[], Required extends boolean>(members: TypedMembers<Members>, required: Required):
+        TupleSchema<Members, Required, undefined>;
+
+    export function Tuple<Members extends BaseSchemaAny[], Required extends boolean, Default extends DefaultValue<TupleSource<Members>>>
+        (members: TypedMembers<Members>, required: Required, defaultValue: Default):
+        TupleSchema<Members, Required, Default>;
+
+    export function Tuple({ $members }: TypedMembers<BaseSchemaAny[]>, required: boolean = true, defaultValue: any = undefined) {
+        return new TupleSchema($members, required, defaultValue);
     }
 
     export function OrSet<MemberSchemas extends BaseSchemaAny[]>
         (subschema: TypedMembers<MemberSchemas>):
         OrSetSchema<MemberSchemas, true, undefined>;
+
     export function OrSet<MemberSchemas extends BaseSchemaAny[], Required extends boolean>
         (subschema: TypedMembers<MemberSchemas>, required: Required):
         OrSetSchema<MemberSchemas, Required, undefined>;
+
     export function OrSet
         <MemberSchemas extends BaseSchemaAny[], Required extends boolean, Default extends DefaultValue<OrSetSchemaSource<MemberSchemas>>>
         (subschema: TypedMembers<MemberSchemas>, required: Required, defaultValue: Default):
         OrSetSchema<MemberSchemas, Required, Default>;
+
     export function OrSet({ $members }: TypedMembers<BaseSchemaAny[]>, required: boolean = true, defaultValue: any = undefined) {
         return new OrSetSchema($members, required, defaultValue);
     }
 
     export function Constant<Constant extends ConstantSource>(constant: Constant): ConstantSchema<Constant, true, undefined>;
+
     export function Constant<Constant extends ConstantSource, Required extends boolean>(constant: Constant, required: Required):
         ConstantSchema<Constant, Required, undefined>;
+
     export function Constant<Constant extends ConstantSource, Required extends boolean, Default extends DefaultValue<Constant>>
         (constant: Constant, required: Required, defaultValue: Default):
         ConstantSchema<Constant, Required, Default>;
+
     export function Constant(value: ConstantSource, required: boolean = true, defaultValue: any = undefined) {
         return new ConstantSchema(value, required, defaultValue);
     }
 
     export type TypedMembers<Members extends readonly any[]> = { $members: Members };
-    
+
     export function Members<const Members extends any[]>(...members: Members): TypedMembers<Members> {
         return { $members: members };
     }
