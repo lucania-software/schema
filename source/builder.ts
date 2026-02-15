@@ -1,18 +1,18 @@
-import { BaseSchema, SourceValue } from ".";
 import { AnySchema } from "./schema/AnySchema";
 import { ArraySchema, ArraySource } from "./schema/ArraySchema";
+import { BaseSchema } from "./schema/BaseSchema";
 import { BooleanSchema, BooleanSource } from "./schema/BooleanSchema";
 import { ConstantSchema, ConstantSource } from "./schema/ConstantSchema";
 import { DateSchema, DateSource } from "./schema/DateSchema";
 import { DynamicObjectSchema, DynamicObjectSource } from "./schema/DynamicObjectSchema";
-import { EnumerationSchema } from "./schema/EnumerationSchema";
+import { EnumerationSchema, EnumerationSource } from "./schema/EnumerationSchema";
 import { LenientObjectModel, LenientObjectSchema, LenientObjectSource, LenientObjectSubschema } from "./schema/LenientObject";
 import { NumberSchema, NumberSource } from "./schema/NumberSchema";
 import { ObjectSchema, ObjectSource, ObjectSubschema } from "./schema/ObjectSchema";
 import { OrSetSchema, OrSetSchemaSource } from "./schema/OrSetSchema";
 import { StringSchema, StringSource } from "./schema/StringSchema";
 import { BaseSchemaAny } from "./typing/extended";
-import { DefaultValue, ModelValue } from "./typing/toolbox";
+import { DefaultValue, ModelValue, SourceValue } from "./typing/toolbox";
 
 /**
  * A collection of helper functions used to create the standard set of schemas.
@@ -202,27 +202,28 @@ export namespace Schema {
         return new ArraySchema(subschema, required, defaultValue);
     }
 
-    export function Enumeration<Member extends string>(subschema: TypedMembers<Member>): EnumerationSchema<Member, true, undefined>;
-    export function Enumeration<Member extends string, Required extends boolean>
-        (subschema: TypedMembers<Member>, required: Required): EnumerationSchema<Member, Required, undefined>;
-    export function Enumeration<Member extends string, Required extends boolean, Default extends DefaultValue<Member>>
-        (subschema: TypedMembers<Member>, required: Required, defaultValue: Default): EnumerationSchema<Member, Required, Default>;
-    export function Enumeration(members: TypedMembers<string>, required: boolean = true, defaultValue: any = undefined) {
-        return new EnumerationSchema(members.$members, required, defaultValue);
+    export function Enumeration<Members extends string[]>
+        (subschema: TypedMembers<Members>): EnumerationSchema<Members, true, undefined>;
+    export function Enumeration<Members extends string[], Required extends boolean>
+        (subschema: TypedMembers<Members>, required: Required): EnumerationSchema<Members, Required, undefined>;
+    export function Enumeration<Members extends string[], Required extends boolean, Default extends DefaultValue<EnumerationSource<Members>>>
+        (subschema: TypedMembers<Members>, required: Required, defaultValue: Default): EnumerationSchema<Members, Required, Default>;
+    export function Enumeration({ $members }: TypedMembers<string[]>, required: boolean = true, defaultValue: any = undefined) {
+        return new EnumerationSchema($members, required, defaultValue);
     }
 
-    export function OrSet<MemberSchema extends BaseSchemaAny>
-        (subschema: TypedMembers<MemberSchema>):
-        OrSetSchema<MemberSchema, true, undefined>;
-    export function OrSet<MemberSchema extends BaseSchemaAny, Required extends boolean>
-        (subschema: TypedMembers<MemberSchema>, required: Required):
-        OrSetSchema<MemberSchema, Required, undefined>;
+    export function OrSet<MemberSchemas extends BaseSchemaAny[]>
+        (subschema: TypedMembers<MemberSchemas>):
+        OrSetSchema<MemberSchemas, true, undefined>;
+    export function OrSet<MemberSchemas extends BaseSchemaAny[], Required extends boolean>
+        (subschema: TypedMembers<MemberSchemas>, required: Required):
+        OrSetSchema<MemberSchemas, Required, undefined>;
     export function OrSet
-        <MemberSchema extends BaseSchemaAny, Required extends boolean, Default extends DefaultValue<OrSetSchemaSource<MemberSchema>>>
-        (subschema: TypedMembers<MemberSchema>, required: Required, defaultValue: Default):
-        OrSetSchema<MemberSchema, Required, Default>;
-    export function OrSet(members: TypedMembers<BaseSchemaAny>, required: boolean = true, defaultValue: any = undefined) {
-        return new OrSetSchema(members.$members, required, defaultValue);
+        <MemberSchemas extends BaseSchemaAny[], Required extends boolean, Default extends DefaultValue<OrSetSchemaSource<MemberSchemas>>>
+        (subschema: TypedMembers<MemberSchemas>, required: Required, defaultValue: Default):
+        OrSetSchema<MemberSchemas, Required, Default>;
+    export function OrSet({ $members }: TypedMembers<BaseSchemaAny[]>, required: boolean = true, defaultValue: any = undefined) {
+        return new OrSetSchema($members, required, defaultValue);
     }
 
     export function Constant<Constant extends ConstantSource>(constant: Constant): ConstantSchema<Constant, true, undefined>;
@@ -235,21 +236,9 @@ export namespace Schema {
         return new ConstantSchema(value, required, defaultValue);
     }
 
-    export type TypedMembers<Member extends any> = { $members: Member[] };
-
-    export function Members<Member extends string[]>(...members: Member): TypedMembers<Member[number]>;
-    export function Members<Member extends number[]>(...members: Member): TypedMembers<Member[number]>;
-    export function Members<Member extends any[]>(...members: Member): TypedMembers<Member[number]>;
-    export function Members<Member extends any[]>(...members: Member): TypedMembers<Member[number]> {
-        /* 
-         * HACK START: The hermes JS engine doesn't use globalThis.Array when interpreting `...members`
-         * It uses `Array`, which is already defined in this namespace.
-         */
-        if (!globalThis.Array.isArray(members)) {
-            const validArrayEntries = globalThis.Object.entries(members).filter(([key]) => !isNaN(key as any));
-            members = validArrayEntries.map(([_, value]) => value) as Member;
-        }
-        /* HACK END */
+    export type TypedMembers<Members extends readonly any[]> = { $members: Members };
+    
+    export function Members<const Members extends any[]>(...members: Members): TypedMembers<Members> {
         return { $members: members };
     }
 
